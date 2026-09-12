@@ -103,19 +103,32 @@ jobs:
           echo "==== 产物清单 ===="
           ls -lh out/System.map out/vmlinux out/arch/arm64/boot/Image* 2>&1 || true
 
+      # ---------- 先自检：产物不存在就直接失败，避免"空包" ----------
+      - name: Verify products exist
+        run: |
+          OUT="$GITHUB_WORKSPACE/kernel_workspace/android-kernel/4.14.186/out"
+          for f in "$OUT/System.map" "$OUT/vmlinux" "$OUT/arch/arm64/boot/Image"; do
+            if [ ! -s "$f" ]; then echo "MISSING: $f"; exit 1; fi
+            echo "OK: $(ls -lh "$f")"
+          done
+
       # ---------- 导出符号表（本次改造的核心目的） ----------
+      # 注意：make 是用 O=out 在 4.14.186/ 目录下执行的，
+      #       所以产物在 .../android-kernel/4.14.186/out/，路径必须带 4.14.186
       - name: Upload symbols
         uses: actions/upload-artifact@v4
         with:
           name: stock-symbols
+          if-no-files-found: error
           path: |
-            kernel_workspace/android-kernel/out/System.map
-            kernel_workspace/android-kernel/out/vmlinux
-            kernel_workspace/android-kernel/out/arch/arm64/boot/Image*
+            kernel_workspace/android-kernel/4.14.186/out/System.map
+            kernel_workspace/android-kernel/4.14.186/out/vmlinux
+            kernel_workspace/android-kernel/4.14.186/out/arch/arm64/boot/Image*
 
       # ---------- 顺手也导出一份 Image 用于与本机真内核逐字节比对 ----------
       - name: Upload Image
         uses: actions/upload-artifact@v4
         with:
           name: stock-image
-          path: kernel_workspace/android-kernel/out/arch/arm64/boot/
+          if-no-files-found: error
+          path: kernel_workspace/android-kernel/4.14.186/out/arch/arm64/boot/
