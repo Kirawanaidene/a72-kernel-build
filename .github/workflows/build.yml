@@ -112,23 +112,13 @@ jobs:
             echo "OK: $(ls -lh "$f")"
           done
 
-      # ---------- 导出符号表（本次改造的核心目的） ----------
+      # ---------- 导出符号表（本次改造：只上传 System.map，约 10MB，避免 482MB 大包下载失败） ----------
       # 注意：make 是用 O=out 在 4.14.186/ 目录下执行的，
       #       所以产物在 .../android-kernel/4.14.186/out/，路径必须带 4.14.186
-      - name: Upload symbols
+      - name: Upload System.map only
         uses: actions/upload-artifact@v4
         with:
-          name: stock-symbols
+          name: stock-systemmap
           if-no-files-found: error
           path: |
             kernel_workspace/android-kernel/4.14.186/out/System.map
-            kernel_workspace/android-kernel/4.14.186/out/vmlinux
-            kernel_workspace/android-kernel/4.14.186/out/arch/arm64/boot/Image*
-
-      # ---------- 顺手也导出一份 Image 用于与本机真内核逐字节比对 ----------
-      - name: Upload Image
-        uses: actions/upload-artifact@v4
-        with:
-          name: stock-image
-          if-no-files-found: error
-          path: kernel_workspace/android-kernel/4.14.186/out/arch/arm64/boot/
