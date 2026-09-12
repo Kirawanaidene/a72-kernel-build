@@ -64,13 +64,16 @@ jobs:
             -b 10.0 clang-aosp
           $GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin/clang --version | head -2
 
-      # ---------- 原厂源码（OPPO 官方开源仓库） ----------
-      # 该仓库只有一个分支：oppo/mtk_s_12.1
-      - name: Clone OPPO stock kernel source
+      # ---------- 内核源码 ----------
+      # 注：OPPO 官方仓库 oppo-source/android_kernel_4.14_oppo_mtk5g 只含其改动部分，
+      #     缺 kernel/sched_assist/Kconfig 等文件，无法编译（已实测 olddefconfig 失败）。
+      #     改用社区补全树：whjddzyx/android12 是该系列最干净的（未做 KSU/BPF 改造），
+      #     hzf1878 等多个 fork 均指向同一 commit。
+      - name: Clone kernel source (community-complete tree)
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace
-          git clone --depth=1 -b oppo/mtk_s_12.1 \
-            https://github.com/oppo-source/android_kernel_4.14_oppo_mtk5g.git \
+          git clone --depth=1 -b android12 \
+            https://github.com/whjddzyx/android_kernel_oppo_mtk6853.git \
             android-kernel
           cd android-kernel && git log -1 --oneline
 
