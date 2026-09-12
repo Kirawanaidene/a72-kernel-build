@@ -1,0 +1,117 @@
+# =====================================================================
+#  目标：复刻 OPPO A72 5G (PDYM20 / MT6853) 的【原生内核】并导出 System.map
+#  用途：算出 GhostLock / 月虹工具需要的 9 个内核符号偏移
+#
+#  与社区项目 (sanba0519) 的关键区别：
+#    1) 不打任何 KSU / ReSukiSU / SUSFS 补丁 —— 保持代码与原厂一致
+#    2) 使用设备导出的 .config (kernel_dot_config) —— 即真机 /proc/config.gz
+#    3) KBUILD_BUILD_USER / HOST 设为原厂值 —— 影响 .rodata 布局，必须一致
+#    4) 额外导出 out/System.map 与 out/vmlinux（原项目只打包 Image）
+#
+#  放置位置：仓库根目录 .github/workflows/Build Stock Kernel.yml
+#  依赖文件：仓库根目录需有 kernel_dot_config（手机导出的 .config）
+# =====================================================================
+
+name: Build Stock Kernel (System.map)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ---------- 磁盘扩容（内核编译很吃空间） ----------
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+                      /opt/hostedtoolcache/CodeQL /usr/local/share/boost || true
+          df -h
+
+      # ---------- 基础依赖 ----------
+      - name: Setup build environment
+        run: |
+          sudo apt-get update
+          sudo -E apt-get -y -qq install git make bc bison ccache openssl \
+            dos2unix zip kmod cpio flex libelf-dev curl libssl-dev libtfm-dev \
+            wget device-tree-compiler ca-certificates python3 binutils \
+            binutils-aarch64-linux-gnu binutils-arm-linux-gnueabi
+          mkdir -p $GITHUB_WORKSPACE/kernel_workspace
+
+      # ---------- GCC 4.9（与原厂同代，取自 android-12.1.0_r27） ----------
+      - name: Download GCC toolchain
+        run: |
+          cd $GITHUB_WORKSPACE/kernel_workspace
+          mkdir gcc64 gcc32
+          wget -q -O gcc-aarch64.tar.gz \
+            https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/tags/android-12.1.0_r27.tar.gz
+          tar -C gcc64/ -zxf gcc-aarch64.tar.gz
+          wget -q -O gcc-arm.tar.gz \
+            https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+archive/refs/tags/android-12.1.0_r27.tar.gz
+          tar -C gcc32/ -zxf gcc-arm.tar.gz
+
+      # ---------- Clang 6443078：与手机 /proc/version 报告的版本号完全一致 ----------
+      - name: Download Clang 6443078
+        run: |
+          cd $GITHUB_WORKSPACE/kernel_workspace
+          git clone -q --depth=1 \
+            https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-6443078 \
+            -b 10.0 clang-aosp
+          $GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin/clang --version | head -2
+
+      # ---------- 原厂源码（OPPO 官方开源仓库） ----------
+      # 该仓库只有一个分支：oppo/mtk_s_12.1
+      - name: Clone OPPO stock kernel source
+        run: |
+          cd $GITHUB_WORKSPACE/kernel_workspace
+          git clone --depth=1 -b oppo/mtk_s_12.1 \
+            https://github.com/oppo-source/android_kernel_4.14_oppo_mtk5g.git \
+            android-kernel
+          cd android-kernel && git log -1 --oneline
+
+      # ---------- 用真机 .config 编译（零补丁、原厂 BUILD_USER/HOST） ----------
+      - name: Configure and build stock kernel
+        run: |
+          cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+          export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc32/bin:$PATH
+          export ARCH=arm64
+          export SUBARCH=arm64
+          # 这两个值必须与原厂一致，否则 /proc/version 文本长度变化会影响 .rodata 布局
+          export KBUILD_BUILD_USER=root
+          export KBUILD_BUILD_HOST=kvm-slave-build-s-vendor-06579691
+
+          mkdir -p out
+          cp $GITHUB_WORKSPACE/kernel_dot_config out/.config
+          make -j"$(nproc)" O=out ARCH=arm64 olddefconfig
+
+          make -j"$(nproc)" O=out ARCH=arm64 \
+            CC="ccache clang" \
+            CLANG_TRIPLE=aarch64-linux-gnu- \
+            CROSS_COMPILE=aarch64-linux-android- \
+            CROSS_COMPILE_ARM32=arm-linux-androideabi- \
+            LD=ld.lld
+
+          echo "==== 产物清单 ===="
+          ls -lh out/System.map out/vmlinux out/arch/arm64/boot/Image* 2>&1 || true
+
+      # ---------- 导出符号表（本次改造的核心目的） ----------
+      - name: Upload symbols
+        uses: actions/upload-artifact@v4
+        with:
+          name: stock-symbols
+          path: |
+            kernel_workspace/android-kernel/out/System.map
+            kernel_workspace/android-kernel/out/vmlinux
+            kernel_workspace/android-kernel/out/arch/arm64/boot/Image*
+
+      # ---------- 顺手也导出一份 Image 用于与本机真内核逐字节比对 ----------
+      - name: Upload Image
+        uses: actions/upload-artifact@v4
+        with:
+          name: stock-image
+          path: kernel_workspace/android-kernel/out/arch/arm64/boot/
