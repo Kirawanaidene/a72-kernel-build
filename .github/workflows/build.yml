@@ -80,7 +80,8 @@ jobs:
       # ---------- 用真机 .config 编译（零补丁、原厂 BUILD_USER/HOST） ----------
       - name: Configure and build stock kernel
         run: |
-          cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+          # 注意：内核源码树位于仓库的 4.14.186/ 子目录，不是仓库根目录
+          cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel/4.14.186
           export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc32/bin:$PATH
           export ARCH=arm64
           export SUBARCH=arm64
