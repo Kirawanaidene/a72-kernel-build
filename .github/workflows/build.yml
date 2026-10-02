@@ -137,26 +137,55 @@ jobs:
           grep -rln "ksu_" --include=*.c --include=*.h . 2>/dev/null | head -30 || echo "(无)"
 
       # ---------- 【新增 B】摘除 KernelSU ----------
+      # Run#7 失败复盘：KSU 目录在 ./KernelSU，drivers/kernelsu 是指向 ../KernelSU/kernel 的
+      # **符号链接**；`rm -rf KernelSU` 删掉链接目标后，drivers/Kconfig:229 那行小写引用
+      #   source "drivers/kernelsu/Kconfig"
+      # 找不到文件 -> olddefconfig 直接 Error 2（原 sed 只匹配大写 "KernelSU"，删不到它）。
+      # 修法核心：**不靠 sed 猜引用**，改为「掏空源码 + 建空壳桩」，任何残留引用都能解析。
       - name: Strip KernelSU
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel/4.14.186
+          echo "==== 摘除前的接线情况 ===="
+          ls -ld KernelSU drivers/kernelsu 2>&1 || true
+          (readlink drivers/kernelsu && echo "(drivers/kernelsu 是符号链接)") 2>/dev/null || true
+          grep -rniE "kernelsu" drivers/Kconfig Makefile 2>/dev/null || true
+
           # 1) 反向应用 KSU 自带补丁
           if [ -d KernelSU ]; then
             find KernelSU -name '*.patch' 2>/dev/null | while read -r p; do
               echo "revert: $p"
               git apply -R --whitespace=nowarn "$p" 2>/dev/null \
-                || echo "  !! 反向应用失败（需人工核对）: $p"
+                || echo "  !! 反向应用失败（不致命）: $p"
             done
           fi
-          # 2) 去掉 Makefile / Kconfig 里的 KSU 接线
-          grep -rl "KernelSU" --include=Makefile . 2>/dev/null | while read -r f; do sed -i '/KernelSU/d' "$f"; done
-          grep -rl "KernelSU" --include=Kconfig  . 2>/dev/null | while read -r f; do sed -i '/KernelSU/d' "$f"; done
-          # 3) 删除 KSU 源码目录
+
+          # 2) 删掉把 KSU 编进来的 obj-y / obj-$(CONFIG_KSU) 行（大小写都覆盖）
+          for f in $(grep -rliE "kernelsu" --include=Makefile . 2>/dev/null); do
+            sed -i -E '/kernelsu/d' "$f" && echo "cleaned Makefile: $f"
+          done
+
+          # 3) 删 KSU 源码目录 + 断链
           rm -rf KernelSU
-          # 4) 残留报告（不硬失败，最终以 System.map 自检为准）
+          rm -f drivers/kernelsu
+
+          # 4)【关键】建空壳桩：即便还有引用行残留也能解析成功，且不编进任何东西
+          mkdir -p drivers/kernelsu
+          printf '# KSU stub (removed by CI)\n' > drivers/kernelsu/Kconfig
+          : > drivers/kernelsu/Makefile
+          echo "---- 桩已建 ----"; ls -la drivers/kernelsu
+
+          # 5) 残留报告（不硬失败，最终以 System.map 自检为准）
           echo "==== 残留检查 ===="
-          R=$(grep -rln "ksu_\|KernelSU" --include=*.c --include=*.h --include=Makefile --include=Kconfig . 2>/dev/null | head -20 || true)
-          if [ -n "$R" ]; then echo "!! 仍有残留："; echo "$R"; else echo "OK: 无残留"; fi
+          R=$(grep -rlniE "ksu_|kernelsu" --include=*.c --include=*.h . 2>/dev/null | head -20 || true)
+          if [ -n "$R" ]; then echo "!! C/H 仍有残留："; echo "$R"; else echo "OK: C/H 无残留"; fi
+
+          # 6) 立刻试跑 olddefconfig —— 快速失败，别等编译几十分钟后才发现
+          export ARCH=arm64
+          export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc32/bin:$PATH
+          export CC=clang
+          mkdir -p out && cp $GITHUB_WORKSPACE/kernel_dot_config out/.config
+          echo "==== 预检 olddefconfig（KSU 摘除后应通过）===="
+          make O=out ARCH=arm64 olddefconfig 2>&1 | tail -20
 
       # ---------- 配置 + 编译 ----------
       - name: Configure and build stock kernel
