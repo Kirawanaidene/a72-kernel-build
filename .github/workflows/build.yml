@@ -1,15 +1,19 @@
 # =====================================================================
-#  目标：复刻 OPPO A72 5G (PDYM20 / MT6853) 的【原生内核】并导出 System.map
-#  用途：算出 GhostLock / 月虹工具需要的 9 个内核符号偏移
+#  OPPO A72 5G (PDYM20 / MT6853) —— 复刻原厂 F.43 内核，导出 System.map
 #
-#  与社区项目 (sanba0519) 的关键区别：
-#    1) 不打任何 KSU / ReSukiSU / SUSFS 补丁 —— 保持代码与原厂一致
-#    2) 使用设备导出的 .config (kernel_dot_config) —— 即真机 /proc/config.gz
-#    3) KBUILD_BUILD_USER / HOST 设为原厂值 —— 影响 .rodata 布局，必须一致
-#    4) 额外导出 out/System.map 与 out/vmlinux（原项目只打包 Image）
+#  Run#5：在 Run#4 基础上修正 4 个「已定位的产物与原厂不一致」原因
+#    1) 摘除 KernelSU —— Run#4 产物含 191 个 ksu_* 符号 / 139 条 kernelsu 串，原厂 0
+#    2) olddefconfig 必须看到真实 clang —— 否则 Kconfig 用宿主 gcc 探测，
+#       LTO 能力门被误关（Run#4 实测 5 项 LTO 配置被改成 n → 代码生成完全不同）
+#    3) 版本串必须带 "+"，构建机/时间戳必须与原厂逐字节一致
+#    4) 关掉会被树内默认值误开的 3 项连接性配置（BT / MTK_COMBO_BT / MTK_COMBO_COMM）
 #
-#  放置位置：仓库根目录 .github/workflows/Build Stock Kernel.yml
-#  依赖文件：仓库根目录需有 kernel_dot_config（手机导出的 .config）
+#  验收标准（本地比对，CI 里没有原厂镜像）：
+#    - Image 大小必须 = 48,736,256 字节
+#    - 横幅必须 = Linux version 4.14.186+ (root@kvm-slave-build-s-vendor-06579691)
+#                 (Android (6443078 based on r383902) clang version 11.0.1 ...)
+#                 #1 SMP PREEMPT Fri Sep 12 17:01:57 CST 2025
+#    - System.map 里 ksu_* / kernelsu 必须 = 0
 # =====================================================================
 
 name: Build Stock Kernel (System.map)
@@ -20,13 +24,14 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    timeout-minutes: 180
     permissions:
       contents: write
 
     steps:
       - uses: actions/checkout@v4
 
-      # ---------- 磁盘扩容（内核编译很吃空间） ----------
+      # ---------- 磁盘扩容 ----------
       - name: Free disk space
         run: |
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
@@ -42,12 +47,15 @@ jobs:
             wget device-tree-compiler ca-certificates python3 binutils \
             binutils-aarch64-linux-gnu binutils-arm-linux-gnueabi
           mkdir -p $GITHUB_WORKSPACE/kernel_workspace
+          # 配置文件必须在仓库根目录
+          test -s $GITHUB_WORKSPACE/kernel_dot_config \
+            || { echo "!! 仓库根目录缺少 kernel_dot_config"; exit 1; }
 
-      # ---------- GCC 4.9（与原厂同代，取自 android-12.1.0_r27） ----------
-      - name: Download GCC toolchain
+      # ---------- GCC 4.9 ----------
+      - name: Download GCC 4.9 toolchain
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace
-          mkdir gcc64 gcc32
+          mkdir -p gcc64 gcc32
           wget -q -O gcc-aarch64.tar.gz \
             https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/aarch64/aarch64-linux-android-4.9/+archive/refs/tags/android-12.1.0_r27.tar.gz
           tar -C gcc64/ -zxf gcc-aarch64.tar.gz
@@ -55,70 +63,140 @@ jobs:
             https://android.googlesource.com/platform/prebuilts/gcc/linux-x86/arm/arm-linux-androideabi-4.9/+archive/refs/tags/android-12.1.0_r27.tar.gz
           tar -C gcc32/ -zxf gcc-arm.tar.gz
 
-      # ---------- Clang 6443078：与手机 /proc/version 报告的版本号完全一致 ----------
+      # ---------- Clang 6443078（与原厂 /proc/version 完全一致） ----------
       - name: Download Clang 6443078
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace
           git clone -q --depth=1 \
             https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-6443078 \
             -b 10.0 clang-aosp
-          $GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin/clang --version | head -2
+          ./clang-aosp/bin/clang --version | head -2
 
       # ---------- 内核源码 ----------
-      # 注：OPPO 官方仓库 oppo-source/android_kernel_4.14_oppo_mtk5g 只含其改动部分，
-      #     缺 kernel/sched_assist/Kconfig 等文件，无法编译（已实测 olddefconfig 失败）。
-      #     改用社区补全树：whjddzyx/android12 是该系列最干净的（未做 KSU/BPF 改造），
-      #     hzf1878 等多个 fork 均指向同一 commit。
-      - name: Clone kernel source (community-complete tree)
+      - name: Clone kernel source
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace
           git clone --depth=1 -b android12 \
-            https://github.com/whjddzyx/android_kernel_oppo_mtk6853.git \
-            android-kernel
+            https://github.com/whjddzyx/android_kernel_oppo_mtk6853.git android-kernel
           cd android-kernel && git log -1 --oneline
 
-      # ---------- 用真机 .config 编译（零补丁、原厂 BUILD_USER/HOST） ----------
+      # ---------- 【新增 A】KernelSU 接线侦察（只报告，便于排障） ----------
+      - name: Recon KernelSU integration
+        run: |
+          cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel/4.14.186
+          echo "==== KSU 目录 ===="
+          ls -la KernelSU 2>/dev/null || echo "(无 KernelSU 目录)"
+          echo "==== 树内 .patch 文件 ===="
+          find . -name '*.patch' -not -path './out/*' 2>/dev/null | head -40 || true
+          echo "==== Makefile/Kconfig 中的 KernelSU 引用 ===="
+          grep -rn "KernelSU" --include=Makefile --include=Kconfig . 2>/dev/null | head -20 || echo "(无)"
+          echo "==== 含 ksu_ 的源文件（前 30） ===="
+          grep -rln "ksu_" --include=*.c --include=*.h . 2>/dev/null | head -30 || echo "(无)"
+
+      # ---------- 【新增 B】摘除 KernelSU ----------
+      - name: Strip KernelSU
+        run: |
+          cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel/4.14.186
+          # 1) 反向应用 KSU 自带补丁
+          if [ -d KernelSU ]; then
+            find KernelSU -name '*.patch' 2>/dev/null | while read -r p; do
+              echo "revert: $p"
+              git apply -R --whitespace=nowarn "$p" 2>/dev/null \
+                || echo "  !! 反向应用失败（需人工核对）: $p"
+            done
+          fi
+          # 2) 去掉 Makefile / Kconfig 里的 KSU 接线
+          grep -rl "KernelSU" --include=Makefile . 2>/dev/null | while read -r f; do sed -i '/KernelSU/d' "$f"; done
+          grep -rl "KernelSU" --include=Kconfig  . 2>/dev/null | while read -r f; do sed -i '/KernelSU/d' "$f"; done
+          # 3) 删除 KSU 源码目录
+          rm -rf KernelSU
+          # 4) 残留报告（不硬失败，最终以 System.map 自检为准）
+          echo "==== 残留检查 ===="
+          R=$(grep -rln "ksu_\|KernelSU" --include=*.c --include=*.h --include=Makefile --include=Kconfig . 2>/dev/null | head -20 || true)
+          if [ -n "$R" ]; then echo "!! 仍有残留："; echo "$R"; else echo "OK: 无残留"; fi
+
+      # ---------- 配置 + 编译 ----------
       - name: Configure and build stock kernel
         run: |
-          # 注意：内核源码树位于仓库的 4.14.186/ 子目录，不是仓库根目录
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel/4.14.186
           export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc32/bin:$PATH
           export ARCH=arm64
           export SUBARCH=arm64
-          # 这两个值必须与原厂一致，否则 /proc/version 文本长度变化会影响 .rodata 布局
           export KBUILD_BUILD_USER=root
           export KBUILD_BUILD_HOST=kvm-slave-build-s-vendor-06579691
+          export KBUILD_BUILD_TIMESTAMP="Fri Sep 12 17:01:57 CST 2025"
+          export CC="clang"
+          export LD="ld.lld"
+          export AR="llvm-ar"
+          export NM="llvm-nm"
+          export OBJCOPY="llvm-objcopy"
+          export OBJDUMP="llvm-objdump"
+          export STRIP="llvm-strip"
+          export CROSS_COMPILE=aarch64-linux-android-
+          export CROSS_COMPILE_ARM32=arm-linux-androideabi-
+          export CLANG_TRIPLE=aarch64-linux-gnu-
 
           mkdir -p out
           cp $GITHUB_WORKSPACE/kernel_dot_config out/.config
           make -j"$(nproc)" O=out ARCH=arm64 olddefconfig
+
+          # 关掉原厂为 n、但会被树内默认值误开的 3 项
+          ./scripts/config --file out/.config -d BT -d MTK_COMBO_BT -d MTK_COMBO_COMM
+          make -j"$(nproc)" O=out ARCH=arm64 olddefconfig
+
+          echo "==== 关键配置自检 ===="
+          for k in LTO LTO_CLANG THINTOOLCHAIN THINLTO CFI_CLANG LOCALVERSION LOCALVERSION_AUTO KALLSYMS KALLSYMS_ALL BT MTK_COMBO_BT MTK_COMBO_COMM; do
+            printf "  CONFIG_%-18s = " "$k"
+            grep -E "^CONFIG_$k=|^# CONFIG_$k is not set" out/.config || echo "<缺>"
+          done
 
           make -j"$(nproc)" O=out ARCH=arm64 \
             CC="ccache clang" \
             CLANG_TRIPLE=aarch64-linux-gnu- \
             CROSS_COMPILE=aarch64-linux-android- \
             CROSS_COMPILE_ARM32=arm-linux-androideabi- \
-            LD=ld.lld
+            LD=ld.lld \
+            LOCALVERSION=+
 
           echo "==== 产物清单 ===="
           ls -lh out/System.map out/vmlinux out/arch/arm64/boot/Image* 2>&1 || true
+          # 供本地比对的明文配置副本（.config 是隐藏文件，artifact 默认不收）
+          cp out/.config out/kernel.config.txt
 
-      # ---------- 先自检：产物不存在就直接失败，避免"空包" ----------
-      - name: Verify products exist
+      # ---------- 自检 ----------
+      - name: Verify products
         run: |
           OUT="$GITHUB_WORKSPACE/kernel_workspace/android-kernel/4.14.186/out"
           for f in "$OUT/System.map" "$OUT/vmlinux" "$OUT/arch/arm64/boot/Image"; do
-            if [ ! -s "$f" ]; then echo "MISSING: $f"; exit 1; fi
-            echo "OK: $(ls -lh "$f")"
+            [ -s "$f" ] || { echo "MISSING: $f"; exit 1; }
+            ls -l "$f"
           done
 
-      # ---------- 导出符号表（本次改造：只上传 System.map，约 10MB，避免 482MB 大包下载失败） ----------
-      # 注意：make 是用 O=out 在 4.14.186/ 目录下执行的，
-      #       所以产物在 .../android-kernel/4.14.186/out/，路径必须带 4.14.186
-      - name: Upload System.map only
+          N=$(grep -c -iE " ksu_|kernelsu" "$OUT/System.map" || true)
+          echo "KSU 符号数 = $N （必须为 0）"
+          test "$N" -eq 0 || { echo "!! 仍含 KernelSU，偏移不可用"; exit 1; }
+
+          IMG="$OUT/arch/arm64/boot/Image"
+          echo "Image 大小 = $(stat -c%s "$IMG")  (原厂 48736256)"
+          sha256sum "$IMG"
+          echo "==== 内核横幅（应与原厂逐字节一致）===="
+          strings -a "$IMG" | grep -m1 "^Linux version" || true
+
+      # ---------- 上传 ----------
+      - name: Upload symbols
         uses: actions/upload-artifact@v4
         with:
-          name: stock-systemmap
+          name: stock-symbols
           if-no-files-found: error
+          compression-level: 6
           path: |
             kernel_workspace/android-kernel/4.14.186/out/System.map
+            kernel_workspace/android-kernel/4.14.186/out/kernel.config.txt
+
+      - name: Upload Image
+        uses: actions/upload-artifact@v4
+        with:
+          name: stock-image
+          if-no-files-found: error
+          compression-level: 6
+          path: kernel_workspace/android-kernel/4.14.186/out/arch/arm64/boot/
