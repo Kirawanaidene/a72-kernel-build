@@ -161,18 +161,25 @@ jobs:
           make -j"$(nproc)" O=out ARCH=arm64 olddefconfig
 
           echo "==== 关键配置自检 ===="
-          for k in LTO LTO_CLANG THINTOOLCHAIN THINLTO CFI_CLANG LOCALVERSION LOCALVERSION_AUTO KALLSYMS KALLSYMS_ALL BT MTK_COMBO_BT MTK_COMBO_COMM; do
+          for k in LTO LTO_CLANG THINTOOLCHAIN THINLTO CFI_CLANG LOCALVERSION LOCALVERSION_AUTO KALLSYMS KALLSYMS_ALL DEBUG_INFO DEBUG_INFO_BTF DEBUG_INFO_DWARF4 BT MTK_COMBO_BT MTK_COMBO_COMM; do
             printf "  CONFIG_%-18s = " "$k"
             grep -E "^CONFIG_$k=|^# CONFIG_$k is not set" out/.config || echo "<缺>"
           done
 
+          # ★ 这棵树的 Makefile 里 `PHONY := _all` 且 `_all:` 是空目标，
+          #   所以不带 target 的 make 什么都不会编（只跑 prepare 就退出）。
+          #   必须显式指定 all (= vmlinux)。
+          set -o pipefail
           make -j"$(nproc)" O=out ARCH=arm64 \
             CC="ccache clang" \
             CLANG_TRIPLE=aarch64-linux-gnu- \
             CROSS_COMPILE=aarch64-linux-android- \
             CROSS_COMPILE_ARM32=arm-linux-androideabi- \
             LD=ld.lld \
-            LOCALVERSION=+
+            LOCALVERSION=+ \
+            all 2>&1 | tee build.log | tail -200
+          echo "==== build.log 尾部（错误行）===="
+          grep -nE "Error [0-9]+|error:|fatal:|No rule to make|undefined reference" build.log | tail -30 || true
 
           echo "==== 产物清单 ===="
           ls -lh out/System.map out/vmlinux out/arch/arm64/boot/Image* 2>&1 || true
@@ -186,6 +193,9 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel || exit 0
           mkdir -p diag
+          cp -f build.log diag/build.log 2>/dev/null || true
+          echo "==== build.log 错误行 ====" | tee diag/log.txt
+          grep -nE "Error [0-9]+|error:|fatal:|No rule to make|undefined reference" build.log 2>/dev/null | tail -40 | tee -a diag/log.txt || echo "  (无)" | tee -a diag/log.txt
           echo "==== out 目录内容 ====" | tee diag/log.txt
           ls -la out/ 2>&1 | head -40 | tee -a diag/log.txt
           echo "==== .config 关键项 ====" | tee -a diag/log.txt
