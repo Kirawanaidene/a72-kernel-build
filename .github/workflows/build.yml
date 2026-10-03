@@ -325,6 +325,37 @@ jobs:
           retention-days: 30
 
       # ---------- 最可靠通道：把报告提交回仓库 ----------
+      - name: Extract struct offsets from DWARF
+        if: always()
+        continue-on-error: true
+        run: |
+          set +e
+          cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
+          OUTDIR="$GITHUB_WORKSPACE/build_result"
+          mkdir -p "$OUTDIR"
+          R="$OUTDIR/struct_offsets.txt"
+          : > "$R"
+          if [ ! -s out/vmlinux ]; then
+            echo "!! 无 out/vmlinux" | tee -a "$R"
+          else
+            ls -l out/vmlinux | tee -a "$R"
+            echo "---- vmlinux 段表（确认 .debug_info 存在）----" | tee -a "$R"
+            ( llvm-readelf -S out/vmlinux 2>/dev/null || readelf -S out/vmlinux 2>/dev/null ) \
+              | grep -iE "debug_info|debug_line|symtab|\.text|\.bss" | tee -a "$R"
+            echo "---- struct selinux_state 成员偏移 ----" | tee -a "$R"
+            # pahole -C selinux_state vmlinux  最直接
+            ( which pahole >/dev/null 2>&1 && pahole -C selinux_state out/vmlinux ) 2>&1 | tee -a "$R"
+            echo "---- 全部 struct（含 task_struct/cred/rt_waiter_node）----" | tee -a "$R"
+            for s in selinux_state task_struct cred rt_waiter_node rt_mutex_waiter file mm_struct; do
+              echo "### $s" | tee -a "$R"
+              ( which pahole >/dev/null 2>&1 && pahole -C "$s" out/vmlinux ) 2>&1 | tee -a "$R"
+            done
+            echo "---- readelf 备用方案：debug_info 里搜 selinux_state ----" | tee -a "$R"
+            ( llvm-readelf --debug-dump=info out/vmlinux 2>/dev/null || readelf --debug-dump=info out/vmlinux 2>/dev/null ) \
+              | grep -A 60 "DW_AT_name.*: selinux_state" | head -80 | tee -a "$R"
+          fi
+          wc -l "$R"
+
       - name: Commit report to repo
         if: always()
         continue-on-error: true
@@ -343,11 +374,17 @@ jobs:
           if [ -d kernel_workspace/android-kernel/out ]; then
             OUT=kernel_workspace/android-kernel/out
             mkdir -p build_result
-            for f in "$OUT/arch/arm64/boot/Image" "$OUT/System.map" "$OUT/vmlinux"; do
+            for f in "$OUT/arch/arm64/boot/Image" "$OUT/System.map"; do
               if [ -s "$f" ]; then
                 cp "$f" build_result/ 2>/dev/null || true
               fi
             done
+            # ★ vmlinux 含 DWARF 约 100~200MB，绝不能入 git（会超限/超时）。
+            #   只记大小与 md5；结构体成员偏移已由上一��用 pahole 提取到
+            #   build_result/struct_offsets.txt
+            if [ -s "$OUT/vmlinux" ]; then
+              { ls -l "$OUT/vmlinux"; md5sum "$OUT/vmlinux"; } > build_result/vmlinux_size.txt 2>/dev/null || true
+            fi
             [ -s "$OUT/.config" ] && cp "$OUT/.config" build_result/kernel.config.txt || true
             git add -f build_result
           fi
@@ -394,6 +431,10 @@ jobs:
           fi
           exit 0
 
+      # ---------- 从 vmlinux 的 DWARF 提取结构体成员偏移 ----------
+      # 4.14 没有 BTF（内核树 Kconfig 里就没这个选项），但 CONFIG_DEBUG_INFO=y
+      # 保证 vmlinux 里有 .debug_info（DWARF4），结构体成员偏移同样能拿到。
+      # 目标：selinux_state.disabled / checkreqprot（= 6.x 的 enforcing 位置）
       # ---------- 上传 ----------
       - name: Upload symbols
         if: always()
