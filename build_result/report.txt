@@ -1,5 +1,5 @@
 make_exit_code=2
-build_log_lines=6027
+build_log_lines=3129
 ---- key configs ----
 CONFIG_KALLSYMS               = CONFIG_KALLSYMS=y
 CONFIG_KALLSYMS_ALL           = CONFIG_KALLSYMS_ALL=y
@@ -33,7 +33,6 @@ ipc
 kernel
 lib
 mm
-modules.builtin
 modules.order
 net
 scripts
@@ -43,171 +42,156 @@ source
 usr
 virt
 ---- boot dir ----
-total 4
-drwxr-xr-x 27 runner runner 4096 Oct  3 11:12 dts
+ls: cannot access 'out/arch/arm64/boot/': No such file or directory
 ---- big files md5 ----
-e6b8fafe37778044beb5b4eada0dbaca  out/fs/ext4/super.o
--rw-r--r-- 1 runner runner 1924144 Oct  3 11:08 out/fs/ext4/super.o
-0ffdf20652f277228c3213805d44f038  out/fs/ext4/mballoc.o
--rw-r--r-- 1 runner runner 1065584 Oct  3 11:08 out/fs/ext4/mballoc.o
-313125a10831f8ca34e48717b853c55d  out/fs/f2fs/data.o
--rw-r--r-- 1 runner runner 1315104 Oct  3 11:08 out/fs/f2fs/data.o
-0e8d35bbc16ee6bb5ae889833814f15f  out/fs/f2fs/super.o
--rw-r--r-- 1 runner runner 1329816 Oct  3 11:07 out/fs/f2fs/super.o
-7672859a9cb3b9259b32a2b29e56739f  out/fs/f2fs/segment.o
--rw-r--r-- 1 runner runner 1191624 Oct  3 11:08 out/fs/f2fs/segment.o
-30620b51197c7231c3cf3161299140de  out/fs/f2fs/node.o
--rw-r--r-- 1 runner runner 1106744 Oct  3 11:08 out/fs/f2fs/node.o
-1b91cdd24af205b4d6c13ee11077af6d  out/fs/compat_ioctl.o
--rw-r--r-- 1 runner runner 1339608 Oct  3 11:09 out/fs/compat_ioctl.o
-e60ce8677d215167b1a29dac4123caf8  out/sound/core/pcm_native.o
--rw-r--r-- 1 runner runner 1498936 Oct  3 11:09 out/sound/core/pcm_native.o
 9b086a2881e7103b2466d241c60c2c53  out/kernel/signal.o
--rw-r--r-- 1 runner runner 1334912 Oct  3 11:06 out/kernel/signal.o
-352b2f10c828b2064117f36c8a09f49c  out/kernel/kheaders_data.tar.xz
--rw-r--r-- 1 runner runner 3341768 Oct  3 11:09 out/kernel/kheaders_data.tar.xz
+-rw-r--r-- 1 runner runner 1334912 Oct  3 11:25 out/kernel/signal.o
+60e3942f7c894d27b839594909211523  out/kernel/kheaders_data.tar.xz
+-rw-r--r-- 1 runner runner 3340716 Oct  3 11:27 out/kernel/kheaders_data.tar.xz
 5d68b911ba20a3d3ccbd0f9527c8b149  out/kernel/sched/fair.o
--rw-r--r-- 1 runner runner 3184536 Oct  3 11:08 out/kernel/sched/fair.o
+-rw-r--r-- 1 runner runner 3184536 Oct  3 11:26 out/kernel/sched/fair.o
 2ef17f9cc6b96fadc74e7ffb027ec231  out/kernel/sched/core.o
--rw-r--r-- 1 runner runner 2563904 Oct  3 11:07 out/kernel/sched/core.o
-229c7e308f9414dbc801adf8fd81ca99  out/kernel/kheaders.o
--rw-r--r-- 1 runner runner 3391752 Oct  3 11:09 out/kernel/kheaders.o
+-rw-r--r-- 1 runner runner 2563904 Oct  3 11:26 out/kernel/sched/core.o
+909c407db3f01e6abf693f0c753cbce4  out/kernel/kheaders.o
+-rw-r--r-- 1 runner runner 3390696 Oct  3 11:27 out/kernel/kheaders.o
 aefd88e2d68cf7667a0613d3205573fd  out/kernel/cgroup/cgroup.o
--rw-r--r-- 1 runner runner 1262296 Oct  3 11:07 out/kernel/cgroup/cgroup.o
+-rw-r--r-- 1 runner runner 1262296 Oct  3 11:25 out/kernel/cgroup/cgroup.o
 dce46200080811930acd9fb0241081dc  out/kernel/trace/trace.o
--rw-r--r-- 1 runner runner 1414632 Oct  3 11:08 out/kernel/trace/trace.o
+-rw-r--r-- 1 runner runner 1414632 Oct  3 11:26 out/kernel/trace/trace.o
 812d81cf730ec7c6680bbe43a323c9dd  out/kernel/events/core.o
--rw-r--r-- 1 runner runner 1662176 Oct  3 11:07 out/kernel/events/core.o
+-rw-r--r-- 1 runner runner 1662176 Oct  3 11:26 out/kernel/events/core.o
 2d6208d3bc53d8f4637a4373511ee9de  out/mm/vmscan.o
--rw-r--r-- 1 runner runner 1123504 Oct  3 11:06 out/mm/vmscan.o
+-rw-r--r-- 1 runner runner 1123504 Oct  3 11:25 out/mm/vmscan.o
 44e094751c1bf2d8e99a539443fe804e  out/mm/memcontrol.o
--rw-r--r-- 1 runner runner 1265600 Oct  3 11:07 out/mm/memcontrol.o
-df563edb97633ebf9898845e0c0aa464  out/lib/zstd/compress.o
--rw-r--r-- 1 runner runner 1568080 Oct  3 11:11 out/lib/zstd/compress.o
+-rw-r--r-- 1 runner runner 1265600 Oct  3 11:26 out/mm/memcontrol.o
 9f2e7d766a1332049d20e2c2ad97df91  out/security/selinux/hooks.o
--rw-r--r-- 1 runner runner 1093600 Oct  3 11:07 out/security/selinux/hooks.o
+-rw-r--r-- 1 runner runner 1093600 Oct  3 11:26 out/security/selinux/hooks.o
 ---- build.log errors ----
-6020:ld.lld: error: duplicate symbol: buf_lock
-6025:make[1]: *** [/home/runner/work/a72-kernel-build/a72-kernel-build/kernel_workspace/android-kernel/Makefile:1226: vmlinux] Error 1
-6027:make: *** [Makefile:146: sub-make] Error 2
+2935:../fs/exfat/exfat_bitmap.c:45:12: error: static declaration of 'exfat_bitmap_test' follows non-static declaration
+2941:../fs/exfat/exfat_bitmap.c:55:13: error: static declaration of 'exfat_bitmap_set' follows non-static declaration
+2947:../fs/exfat/exfat_bitmap.c:60:13: error: static declaration of 'exfat_bitmap_clear' follows non-static declaration
+2954:make[3]: *** [../scripts/Makefile.build:356: fs/exfat/exfat_bitmap.o] Error 1
+2955:make[2]: *** [../scripts/Makefile.build:671: fs/exfat] Error 2
+2956:make[1]: *** [/home/runner/work/a72-kernel-build/a72-kernel-build/kernel_workspace/android-kernel/Makefile:1245: fs] Error 2
+3129:make: *** [Makefile:146: sub-make] Error 2
 ---- build.log tail 120 ----
-  CC      drivers/misc/mediatek/trusted_mem/alloc_api.o
-  CC      drivers/misc/mediatek/thermal/common/mtk_thermal_platform.o
-  CC      drivers/misc/mediatek/typec/tcpc/tcpci_core.o
-  CC      drivers/misc/mediatek/usb_boost/v1/usb_boost_plat.o
-  CC      drivers/misc/mediatek/trusted_mem/mpu_vio_checker.o
-  AR      drivers/misc/mediatek/usb_boost/v1/built-in.o
-  AR      drivers/misc/mediatek/usb_boost/built-in.o
-  CC      drivers/misc/mediatek/vibrator/vibrator_drv.o
-  CC      drivers/misc/mediatek/trusted_mem/tee_devices.o
-  CC      drivers/misc/mediatek/thermal/common/ap_thermal_limit.o
-  CC      drivers/misc/mediatek/typec/tcpc/tcpci_typec.o
-  CC      drivers/misc/mediatek/trusted_mem/tee_impl/tee_invoke.o
-  CC      drivers/misc/mediatek/vibrator/mt6853/vibrator.o
-  CC      drivers/misc/mediatek/trusted_mem/tee_impl/tee_ops.o
-  AR      drivers/misc/mediatek/vibrator/mt6853/built-in.o
-  AR      drivers/misc/mediatek/vibrator/built-in.o
-  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_ta.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_ntc_cust.o
-  CC      drivers/misc/mediatek/typec/tcpc/tcpci_timer.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_battery.o
-  CC      drivers/misc/mediatek/trusted_mem/mtee_devices.o
-  CC      drivers/misc/mediatek/trusted_mem/mtee_impl/mtee_ops.o
-  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_mutt_gen97.o
-  CC      drivers/misc/mediatek/typec/tcpc/tcpm.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_bts.o
-  CC      drivers/misc/mediatek/trusted_mem/mtee_impl/mtee_invoke.o
-  AR      drivers/misc/mediatek/trusted_mem/trusted_mem.o
-  AR      drivers/misc/mediatek/trusted_mem/tee_impl.o
-  AR      drivers/misc/mediatek/trusted_mem/mtee_impl.o
-  AR      drivers/misc/mediatek/trusted_mem/built-in.o
-  CC      drivers/misc/mediatek/vpu/mt6853/dummy.o
-  AR      drivers/misc/mediatek/vpu/mt6853/built-in.o
-  CC      drivers/misc/mediatek/typec/tcpc/tcpci.o
-  AR      drivers/misc/mediatek/vpu/built-in.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_lvts_tc.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_btsmdpa.o
-  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_bcct_v1.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_dbg_info.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_btsnrpa.o
-  CC      drivers/misc/mediatek/typec/tcpc/tcpci_alert.o
-  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_atm.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_tc_wrapper.o
-  CC      drivers/misc/mediatek/typec/tcpc/rt_pd_manager.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_cpu_noBank.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_thermal_ipi.o
-  CC      drivers/misc/mediatek/typec/tcpc/tcpci_event.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_pmic_efuse.o
-  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_dtm.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_pa.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_core.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_ts_6359vcore.o
-  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_sysrst.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_pa_thput.o
-  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_VR_FPS.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_ts_6359vproc.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt.o
-  AR      drivers/misc/mediatek/thermal/common/coolers/built-in.o
-  CC      drivers/misc/mediatek/thermal/common/mtk_thermal_timer.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_ts_6359vgpu.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_pmic.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_dpm_core.o
-  CC      drivers/misc/mediatek/zone_movable_cma/single_cma.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_ts_6359tsx.o
-  CC      drivers/misc/mediatek/zone_movable_cma/zmc_notify.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_charger.o
-  AR      drivers/misc/mediatek/zone_movable_cma/built-in.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_dpm_uvdm.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_ts_6359dcxo.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_dpm_alt_mode_dp.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_wmt.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_tsAll.o
-  AR      drivers/misc/mediatek/thermal/mt6853/src/built-in.o
-  AR      drivers/misc/mediatek/thermal/mt6853/built-in.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_dpm_pdo_select.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_imgsensor.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_dpm_reaction.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_snk.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_src.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_vdm.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_drs.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_prs.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_vcs.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_dbg.o
-  AR      drivers/misc/mediatek/thermal/common/thermal_zones/built-in.o
-  AR      drivers/misc/mediatek/thermal/common/built-in.o
-  AR      drivers/misc/mediatek/thermal/built-in.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_tcp.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_com.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_src.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_snk.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_ufp.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_vcs.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_dfp.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_dr.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_drs.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_prs.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_dbg.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_com.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_dpm_alt_mode_dc.o
-  AR      drivers/misc/mediatek/typec/tcpc/built-in.o
-  AR      drivers/misc/mediatek/typec/built-in.o
-  AR      drivers/misc/mediatek/built-in.o
-  AR      drivers/misc/built-in.o
-  AR      drivers/built-in.o
-  GEN     .version
-  CHK     include/generated/compile.h
-  UPD     include/generated/compile.h
-  CC      init/version.o
-  AR      init/built-in.o
-  AR      built-in.o
-  LD      vmlinux.o
-ld.lld: error: duplicate symbol: buf_lock
->>> defined at exfat_cache.c:703 (/home/runner/work/a72-kernel-build/a72-kernel-build/kernel_workspace/android-kernel/out/../fs/exfat/exfat_cache.c:703)
->>>            fs/exfat/exfat_cache.o:(buf_lock) in archive built-in.o
->>> defined at stp_uart.c
->>>            drivers/misc/mediatek/connectivity/common/common_main/linux/stp_uart.o:(.bss+0x4448) in archive built-in.o
-make[1]: *** [/home/runner/work/a72-kernel-build/a72-kernel-build/kernel_workspace/android-kernel/Makefile:1226: vmlinux] Error 1
+  CC      kernel/time/timer.o
+  CC      kernel/sched_assist/sched_assist_rwsem.o
+  CC      kernel/sched_assist/sched_assist_futex.o
+  CC      kernel/sched_assist/sched_assist_workqueue.o
+  CC      kernel/sched_assist/sched_assist_rt.o
+  CC      kernel/time/hrtimer.o
+  CC      kernel/sched_assist/sched_assist_slide_v1.o
+  CC      kernel/rcu/rcu_segcblist.o
+  AR      kernel/sched_assist/built-in.o
+  CC      kernel/sched/loadavg.o
+  AR      kernel/rcu/built-in.o
+  CC      kernel/trace/trace_clock.o
+  CC      kernel/time/timekeeping.o
+  CC      kernel/trace/ring_buffer.o
+  CC      kernel/time/ntp.o
+  CC      kernel/freezer.o
+  CC      kernel/time/clocksource.o
+  CC      kernel/time/jiffies.o
+  CC      kernel/trace/trace.o
+  CC      kernel/sched/clock.o
+  CC      kernel/time/timer_list.o
+  CC      kernel/sched/cputime.o
+  CC      kernel/profile.o
+  CC      kernel/time/timeconv.o
+  CC      kernel/time/timecounter.o
+  CC      kernel/time/alarmtimer.o
+  CC      kernel/sched/idle_task.o
+  CC      kernel/stacktrace.o
+  CC      kernel/trace/trace_output.o
+  CC      kernel/sched/fair.o
+  CC      kernel/time/posix-timers.o
+  CC      kernel/trace/trace_seq.o
+  CC      kernel/time/posix-cpu-timers.o
+  CC      kernel/futex.o
+  CC      kernel/trace/trace_stat.o
+  CC      kernel/time/posix-clock.o
+  CC      kernel/trace/trace_printk.o
+  CC      kernel/time/itimer.o
+  CC      kernel/trace/trace_sched_switch.o
+  CC      kernel/sched/rt.o
+  CC      kernel/time/clockevents.o
+  CC      kernel/trace/trace_nop.o
+  CC      kernel/time/tick-common.o
+  CC      kernel/trace/blktrace.o
+  CC      kernel/sched/deadline.o
+  CC      kernel/time/tick-broadcast.o
+  CC      kernel/trace/trace_events.o
+  CC      kernel/sched/wait.o
+  CC      kernel/time/tick-broadcast-hrtimer.o
+  CC      kernel/time/sched_clock.o
+  CC      kernel/sched/wait_bit.o
+  CC      kernel/smp.o
+  CC      kernel/time/tick-oneshot.o
+  CC      kernel/sched/swait.o
+  CC      kernel/time/tick-sched.o
+  CC      kernel/trace/trace_export.o
+  CC      kernel/sched/completion.o
+  CC      kernel/uid16.o
+  CC      kernel/sched/idle.o
+  CC      kernel/trace/trace_event_perf.o
+  CC      kernel/time/timer_list_aee.o
+  CC      kernel/trace/trace_events_filter.o
+  AR      kernel/time/built-in.o
+  CC      kernel/module.o
+  CC      kernel/trace/trace_events_trigger.o
+  CC      kernel/sched/cpupri.o
+  CC      kernel/sched/cpudeadline.o
+  CC      kernel/trace/bpf_trace.o
+  CC      kernel/sched/topology.o
+  CC      kernel/module_signing.o
+  CC      kernel/sched/stop_task.o
+  CC      kernel/trace/power-traces.o
+  CC      kernel/kallsyms.o
+  CC      kernel/sched/energy.o
+  CC      kernel/trace/rpm-traces.o
+  CC      kernel/sched/walt.o
+  CC      kernel/compat.o
+  CC      kernel/trace/trace_probe.o
+  CC      kernel/sched/stats.o
+  CC      kernel/sched/debug.o
+  CC      kernel/utsname.o
+  CC      kernel/trace/trace_uprobe.o
+  CC      kernel/user_namespace.o
+  CC      kernel/sched/tune.o
+  CC      kernel/pid_namespace.o
+  CC      kernel/trace/mtk_trace.o
+  GZIP    kernel/config_data.gz
+  CC      kernel/sched/cpuacct.o
+  AR      kernel/trace/built-in.o
+  CC      kernel/stop_machine.o
+  CC      kernel/sched/cpufreq.o
+  CC      kernel/audit.o
+  CC      kernel/sched/cpufreq_schedutil.o
+  CC      kernel/auditfilter.o
+  CC      kernel/sched/membarrier.o
+  CC      kernel/sched/psi.o
+  CC      kernel/auditsc.o
+  CC      kernel/audit_watch.o
+  CC      kernel/audit_fsnotify.o
+  AR      kernel/sched/built-in.o
+  CC      kernel/audit_tree.o
+  CC      kernel/seccomp.o
+  CC      kernel/utsname_sysctl.o
+  CC      kernel/taskstats.o
+  CC      kernel/tsacct.o
+  CC      kernel/tracepoint.o
+  CC      kernel/elfcore.o
+  CC      kernel/irq_work.o
+  CC      kernel/cpu_pm.o
+  CC      kernel/scs.o
+  CC      kernel/memremap.o
+  CHK     kernel/kheaders_data.tar.xz
+  CHK     kernel/config_data.h
+  UPD     kernel/config_data.h
+  CC      kernel/configs.o
+  GEN     kernel/kheaders_data.tar.xz
+  AR      kernel/built-in.o
+  CC [M]  kernel/kheaders.o
 make[1]: Leaving directory '/home/runner/work/a72-kernel-build/a72-kernel-build/kernel_workspace/android-kernel/out'
 make: *** [Makefile:146: sub-make] Error 2
