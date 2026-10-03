@@ -1,48 +1,48 @@
 ==== build.log 错误行 ====
-6038:make[2]: *** [../scripts/Makefile.modpost:108: __modpost] Error 1
-6039:make[1]: *** [/home/runner/work/a72-kernel-build/a72-kernel-build/kernel_workspace/android-kernel/Makefile:1502: modules] Error 2
-6042:make: *** [Makefile:146: sub-make] Error 2
+6037:make[2]: *** [../scripts/Makefile.modpost:108: __modpost] Error 1
+6038:make[1]: *** [/home/runner/work/a72-kernel-build/a72-kernel-build/kernel_workspace/android-kernel/Makefile:1502: modules] Error 2
+6040:make: *** [Makefile:146: sub-make] Error 2
 ==== out 目录内容 ====
-total 4922536
-drwxr-xr-x 23 runner runner       4096 Oct  3 12:41 .
-drwxr-xr-x 29 runner runner       4096 Oct  3 12:41 ..
--rw-r--r--  1 runner runner     168326 Oct  3 12:21 .config
--rw-r--r--  1 runner runner     168326 Oct  3 12:21 .config.old
--rw-r--r--  1 runner runner        789 Oct  3 12:21 .missing-syscalls.d
-drwxr-x---  2 runner runner     270336 Oct  3 12:41 .thinlto-cache
--rw-r--r--  1 runner runner   10379147 Oct  3 12:41 .tmp_System.map
--rw-r--r--  1 runner runner   31409884 Oct  3 12:40 .tmp_kallsyms1.S
--rw-r--r--  1 runner runner   10540904 Oct  3 12:40 .tmp_kallsyms1.o
--rw-r--r--  1 runner runner   31409884 Oct  3 12:40 .tmp_kallsyms2.S
--rw-r--r--  1 runner runner   10540904 Oct  3 12:40 .tmp_kallsyms2.o
--rw-r--r--  1 runner runner     553827 Oct  3 12:32 .tmp_lto.lds
-drwxr-xr-x  2 runner runner       4096 Oct  3 12:30 .tmp_versions
--rwxr-xr-x  1 runner runner  845093920 Oct  3 12:40 .tmp_vmlinux1
--rwxr-xr-x  1 runner runner  855645240 Oct  3 12:40 .tmp_vmlinux2
--rw-r--r--  1 runner runner          2 Oct  3 12:32 .version
--rw-r--r--  1 runner runner        206 Oct  3 12:41 .vmlinux.cmd
--rw-r--r--  1 runner runner        565 Oct  3 12:21 Makefile
--rw-r--r--  1 runner runner     664744 Oct  3 12:41 Module.symvers
--rw-r--r--  1 runner runner   10379147 Oct  3 12:40 System.map
-drwxr-xr-x  3 runner runner       4096 Oct  3 12:21 arch
-drwxr-xr-x  4 runner runner       4096 Oct  3 12:23 block
--rw-r--r--  1 runner runner    2885290 Oct  3 12:32 built-in.o
-drwxr-xr-x  2 runner runner       4096 Oct  3 12:21 certs
-drwxr-xr-x  3 runner runner      12288 Oct  3 12:23 crypto
-drwxr-xr-x 70 runner runner       4096 Oct  3 12:32 drivers
-drwxr-xr-x  2 runner runner       4096 Oct  3 12:24 firmware
-drwxr-xr-x 30 runner runner      12288 Oct  3 12:24 fs
-drwxr-xr-x  4 runner runner       4096 Oct  3 12:21 include
-drwxr-xr-x  2 runner runner       4096 Oct  3 12:32 init
-drwxr-xr-x  2 runner runner       4096 Oct  3 12:21 ipc
-drwxr-xr-x 16 runner runner      12288 Oct  3 12:41 kernel
-drwxr-xr-x 10 runner runner      20480 Oct  3 12:25 lib
-drwxr-xr-x  5 runner runner      12288 Oct  3 12:22 mm
--rw-r--r--  1 runner runner      32342 Oct  3 12:25 modules.builtin
--rw-r--r--  1 runner runner        191 Oct  3 12:41 modules.order
-drwxr-xr-x 26 runner runner       4096 Oct  3 12:27 net
-drwxr-xr-x  8 runner runner       4096 Oct  3 12:21 scripts
-drwxr-xr-x  6 runner runner       4096 Oct  3 12:22 security
+total 4922532
+drwxr-xr-x 23 runner runner       4096 Oct  3 13:34 .
+drwxr-xr-x 29 runner runner       4096 Oct  3 13:34 ..
+-rw-r--r--  1 runner runner     168326 Oct  3 13:19 .config
+-rw-r--r--  1 runner runner     168326 Oct  3 13:19 .config.old
+-rw-r--r--  1 runner runner        789 Oct  3 13:19 .missing-syscalls.d
+drwxr-x---  2 runner runner     266240 Oct  3 13:34 .thinlto-cache
+-rw-r--r--  1 runner runner   10379143 Oct  3 13:34 .tmp_System.map
+-rw-r--r--  1 runner runner   31409884 Oct  3 13:34 .tmp_kallsyms1.S
+-rw-r--r--  1 runner runner   10540904 Oct  3 13:34 .tmp_kallsyms1.o
+-rw-r--r--  1 runner runner   31409884 Oct  3 13:34 .tmp_kallsyms2.S
+-rw-r--r--  1 runner runner   10540904 Oct  3 13:34 .tmp_kallsyms2.o
+-rw-r--r--  1 runner runner     553827 Oct  3 13:27 .tmp_lto.lds
+drwxr-xr-x  2 runner runner       4096 Oct  3 13:26 .tmp_versions
+-rwxr-xr-x  1 runner runner  845093920 Oct  3 13:34 .tmp_vmlinux1
+-rwxr-xr-x  1 runner runner  855645240 Oct  3 13:34 .tmp_vmlinux2
+-rw-r--r--  1 runner runner          2 Oct  3 13:27 .version
+-rw-r--r--  1 runner runner        206 Oct  3 13:34 .vmlinux.cmd
+-rw-r--r--  1 runner runner        565 Oct  3 13:19 Makefile
+-rw-r--r--  1 runner runner     664744 Oct  3 13:34 Module.symvers
+-rw-r--r--  1 runner runner   10379143 Oct  3 13:34 System.map
+drwxr-xr-x  3 runner runner       4096 Oct  3 13:19 arch
+drwxr-xr-x  4 runner runner       4096 Oct  3 13:21 block
+-rw-r--r--  1 runner runner    2885290 Oct  3 13:27 built-in.o
+drwxr-xr-x  2 runner runner       4096 Oct  3 13:20 certs
+drwxr-xr-x  3 runner runner      12288 Oct  3 13:21 crypto
+drwxr-xr-x 70 runner runner       4096 Oct  3 13:27 drivers
+drwxr-xr-x  2 runner runner       4096 Oct  3 13:22 firmware
+drwxr-xr-x 30 runner runner      12288 Oct  3 13:22 fs
+drwxr-xr-x  4 runner runner       4096 Oct  3 13:19 include
+drwxr-xr-x  2 runner runner       4096 Oct  3 13:27 init
+drwxr-xr-x  2 runner runner       4096 Oct  3 13:20 ipc
+drwxr-xr-x 16 runner runner      12288 Oct  3 13:34 kernel
+drwxr-xr-x 10 runner runner      20480 Oct  3 13:23 lib
+drwxr-xr-x  5 runner runner      12288 Oct  3 13:20 mm
+-rw-r--r--  1 runner runner      32342 Oct  3 13:23 modules.builtin
+-rw-r--r--  1 runner runner        191 Oct  3 13:34 modules.order
+drwxr-xr-x 26 runner runner       4096 Oct  3 13:24 net
+drwxr-xr-x  8 runner runner       4096 Oct  3 13:19 scripts
+drwxr-xr-x  6 runner runner       4096 Oct  3 13:20 security
 ==== .config 关键项 ====
   CONFIG_KALLSYMS                 = CONFIG_KALLSYMS=y
   CONFIG_KALLSYMS_ALL             = CONFIG_KALLSYMS_ALL=y
@@ -63,9 +63,9 @@ drwxr-xr-x  6 runner runner       4096 Oct  3 12:22 security
   CONFIG_ARM64_VA_BITS            = CONFIG_ARM64_VA_BITS=39
   CONFIG_PANIC_ON_OOPS            = CONFIG_PANIC_ON_OOPS=y
 ==== 产物 ====
--rw-r--r-- 1 runner runner  10379147 Oct  3 12:40 out/System.map
--rw-r--r-- 1 runner runner  56909840 Oct  3 12:41 out/arch/arm64/boot/Image
--rwxr-xr-x 1 runner runner 855645240 Oct  3 12:40 out/vmlinux
+-rw-r--r-- 1 runner runner  10379143 Oct  3 13:34 out/System.map
+-rw-r--r-- 1 runner runner  56909840 Oct  3 13:34 out/arch/arm64/boot/Image
+-rwxr-xr-x 1 runner runner 855645240 Oct  3 13:34 out/vmlinux
 ==== vmlinux 段（看 BTF/符号）====
 ==== PAHOLD ====
 /usr/bin/pahole

@@ -1,4 +1,4 @@
--rwxr-xr-x 1 runner runner 855645240 Oct  3 12:40 out/vmlinux
+-rwxr-xr-x 1 runner runner 855645240 Oct  3 13:34 out/vmlinux
 ---- vmlinux 段表（确认 .debug_info 存在）----
   [ 1] .head.text        PROGBITS         ffffff8008080000  00010000
   [ 3] .text             PROGBITS         ffffff8008081000  00011000
