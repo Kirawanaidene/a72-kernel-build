@@ -1,4 +1,4 @@
--rwxr-xr-x 1 runner runner 855645240 Oct  3 13:34 out/vmlinux
+-rwxr-xr-x 1 runner runner 855645240 Oct  3 14:37 out/vmlinux
 ---- vmlinux 段表（确认 .debug_info 存在）----
   [ 1] .head.text        PROGBITS         ffffff8008080000  00010000
   [ 3] .text             PROGBITS         ffffff8008081000  00011000
@@ -32,7 +32,7 @@ struct selinux_state {
 	/* last cacheline: 32 bytes */
 };
 
----- 全部 struct（含 task_struct/cred/rt_waiter_node）----
+---- 全部 struct（generate_target.py 需要的 + 补充）----
 ### selinux_state
 struct selinux_state {
 	bool                       disabled;             /*     0     1 */
@@ -564,6 +564,43 @@ struct mm_struct {
 	/* sum members: 872, holes: 2, sum holes: 8 */
 	/* last cacheline: 48 bytes */
 };
+
+### nf_logger
+struct nf_logger {
+	char *                     name;                 /*     0     8 */
+	enum nf_log_type           type;                 /*     8     4 */
+
+	/* XXX 4 bytes hole, try to pack */
+
+	nf_logfn *                 logfn;                /*    16     8 */
+	struct module *            me;                   /*    24     8 */
+
+	/* size: 32, cachelines: 1, members: 4 */
+	/* sum members: 28, holes: 1, sum holes: 4 */
+	/* last cacheline: 32 bytes */
+};
+
+### ctl_table
+struct ctl_table {
+	const char  *              procname;             /*     0     8 */
+	void *                     data;                 /*     8     8 */
+	int                        maxlen;               /*    16     4 */
+	umode_t                    mode;                 /*    20     2 */
+
+	/* XXX 2 bytes hole, try to pack */
+
+	struct ctl_table *         child;                /*    24     8 */
+	proc_handler *             proc_handler;         /*    32     8 */
+	struct ctl_table_poll *    poll;                 /*    40     8 */
+	void *                     extra1;               /*    48     8 */
+	void *                     extra2;               /*    56     8 */
+
+	/* size: 64, cachelines: 1, members: 9 */
+	/* sum members: 62, holes: 1, sum holes: 2 */
+};
+
+### rt_mutex_waiter (full, for WAITER_* macros)
+rt_mutex_waiter	80	1
 
 ---- readelf 备用方案：debug_info 里搜 selinux_state ----
     <7220c63>   DW_AT_name        : (indirect string, offset: 0x2b2e78): selinux_state

@@ -1,5 +1,5 @@
 make_exit_code=2
-build_log_lines=6040
+build_log_lines=6042
 ---- key configs ----
 CONFIG_KALLSYMS               = CONFIG_KALLSYMS=y
 CONFIG_KALLSYMS_ALL           = CONFIG_KALLSYMS_ALL=y
@@ -15,9 +15,9 @@ CONFIG_LOCALVERSION           = CONFIG_LOCALVERSION=""
 CONFIG_ARM64_VA_BITS          = CONFIG_ARM64_VA_BITS=39
 CONFIG_PANIC_ON_OOPS          = CONFIG_PANIC_ON_OOPS=y
 ---- products ----
--rw-r--r-- 1 runner runner  10379143 Oct  3 13:34 out/System.map
--rw-r--r-- 1 runner runner  56909840 Oct  3 13:34 out/arch/arm64/boot/Image
--rwxr-xr-x 1 runner runner 855645240 Oct  3 13:34 out/vmlinux
+-rw-r--r-- 1 runner runner  10379147 Oct  3 14:37 out/System.map
+-rw-r--r-- 1 runner runner  56909840 Oct  3 14:37 out/arch/arm64/boot/Image
+-rwxr-xr-x 1 runner runner 855645240 Oct  3 14:37 out/vmlinux
 ---- out dir top ----
 Makefile
 Module.symvers
@@ -48,138 +48,137 @@ virt
 vmlinux
 vmlinux.o
 ---- boot dir ----
-total 55464
--rw-r--r--  1 runner runner 56909840 Oct  3 13:34 Image
-drwxr-xr-x 27 runner runner     4096 Oct  3 13:23 dts
+total 75796
+-rw-r--r--  1 runner runner 56909840 Oct  3 14:37 Image
+-rw-r--r--  1 runner runner 20816015 Oct  3 14:37 Image.gz
+drwxr-xr-x 27 runner runner     4096 Oct  3 14:18 dts
 ---- big files md5 ----
-93286413373b4c6f54c62a94b67522f9  out/.tmp_kallsyms2.S
--rw-r--r-- 1 runner runner 31409884 Oct  3 13:34 out/.tmp_kallsyms2.S
+ba78b500a226c604d4211d7445794cee  out/.tmp_kallsyms2.S
+-rw-r--r-- 1 runner runner 31409908 Oct  3 14:37 out/.tmp_kallsyms2.S
 9cab4d7b187e53fb9482f57dd9738726  out/fs/ext4/super.o
--rw-r--r-- 1 runner runner 1556980 Oct  3 13:21 out/fs/ext4/super.o
+-rw-r--r-- 1 runner runner 1556980 Oct  3 14:13 out/fs/ext4/super.o
 2b71ecf3b97d027ef9f0581a30e57dd9  out/fs/f2fs/super.o
--rw-r--r-- 1 runner runner 1076132 Oct  3 13:21 out/fs/f2fs/super.o
-0d244dfe0e35eabd5a78bf83c2069aed  out/.tmp_vmlinux2
--rwxr-xr-x 1 runner runner 855645240 Oct  3 13:34 out/.tmp_vmlinux2
-68b72b72289f2c96f252182532f5f96a  out/.tmp_kallsyms2.o
--rw-r--r-- 1 runner runner 10540904 Oct  3 13:34 out/.tmp_kallsyms2.o
+-rw-r--r-- 1 runner runner 1076132 Oct  3 14:13 out/fs/f2fs/super.o
+87ca25147c34154e03084b0d1191f963  out/.tmp_vmlinux2
+-rwxr-xr-x 1 runner runner 855645240 Oct  3 14:37 out/.tmp_vmlinux2
+d6b82c78d397b7636af49e27ef141e2c  out/.tmp_kallsyms2.o
+-rw-r--r-- 1 runner runner 10540904 Oct  3 14:37 out/.tmp_kallsyms2.o
 b9d9e5f686d63baeb7f2f0c66c69de0b  out/built-in.o
--rw-r--r-- 1 runner runner 2885290 Oct  3 13:27 out/built-in.o
-a76778d66404c7dc2c21b59b4bc47093  out/.tmp_kallsyms1.o
--rw-r--r-- 1 runner runner 10540904 Oct  3 13:34 out/.tmp_kallsyms1.o
-ae265892cf54cceb406b1fc98d2986c5  out/vmlinux.o
--rw-r--r-- 1 runner runner 2374678576 Oct  3 13:33 out/vmlinux.o
-2cbec50d995f1442c68e675aa5ad0d96  out/kernel/kheaders.lto.o
--rw-r--r-- 1 runner runner 3394912 Oct  3 13:34 out/kernel/kheaders.lto.o
-57bdbd9f7c5a073f6b6e2e524ba5d470  out/kernel/kheaders_data.tar.xz
--rw-r--r-- 1 runner runner 3340420 Oct  3 13:22 out/kernel/kheaders_data.tar.xz
+-rw-r--r-- 1 runner runner 2885290 Oct  3 14:27 out/built-in.o
+1775d2eccb3214ab0818f345e7bd2767  out/.tmp_kallsyms1.o
+-rw-r--r-- 1 runner runner 10540904 Oct  3 14:37 out/.tmp_kallsyms1.o
+03c2c61e5ec48a71878ec47031a99dfe  out/vmlinux.o
+-rw-r--r-- 1 runner runner 2374678576 Oct  3 14:37 out/vmlinux.o
+df1aee549f24f7ccc661677e740694c0  out/kernel/kheaders.lto.o
+-rw-r--r-- 1 runner runner 3396592 Oct  3 14:37 out/kernel/kheaders.lto.o
+f368498804f4b2ad73f337fb2095c42e  out/kernel/kheaders_data.tar.xz
+-rw-r--r-- 1 runner runner 3342100 Oct  3 14:15 out/kernel/kheaders_data.tar.xz
 ba496a7fae3f25aced1963d9631657fa  out/kernel/sched/fair.o
--rw-r--r-- 1 runner runner 1939644 Oct  3 13:20 out/kernel/sched/fair.o
+-rw-r--r-- 1 runner runner 1939644 Oct  3 14:13 out/kernel/sched/fair.o
 30a9784d371ef7f1525898c48f93db88  out/kernel/sched/core.o
--rw-r--r-- 1 runner runner 1874044 Oct  3 13:20 out/kernel/sched/core.o
+-rw-r--r-- 1 runner runner 1874044 Oct  3 14:13 out/kernel/sched/core.o
 fc2087c376afa814aaab27d70e86cad5  out/kernel/trace/trace.o
--rw-r--r-- 1 runner runner 1084892 Oct  3 13:21 out/kernel/trace/trace.o
+-rw-r--r-- 1 runner runner 1084892 Oct  3 14:14 out/kernel/trace/trace.o
 e0d1af653b58a692133d106ee1021abf  out/kernel/events/core.o
--rw-r--r-- 1 runner runner 1267324 Oct  3 13:20 out/kernel/events/core.o
-866469cf936ec197ae720a241e640b86  out/vmlinux
--rwxr-xr-x 1 runner runner 855645240 Oct  3 13:34 out/vmlinux
-fcee18d44604c21596f0dfa866d6ee61  out/.tmp_System.map
--rw-r--r-- 1 runner runner 10379143 Oct  3 13:34 out/.tmp_System.map
-9b1b5fdb8df626c64e6494473899a0fc  out/.thinlto-cache/llvmcache-9ADED75A5EDAEC0BB479C43C25D1CA39139FFBC2
--rw------- 1 runner runner 1671528 Oct  3 13:31 out/.thinlto-cache/llvmcache-9ADED75A5EDAEC0BB479C43C25D1CA39139FFBC2
-b46490b076d997bccaa5cce56180e0f0  out/.thinlto-cache/llvmcache-513863286E4161080C589CB5443A9F41812B744C
--rw------- 1 runner runner 2373808 Oct  3 13:29 out/.thinlto-cache/llvmcache-513863286E4161080C589CB5443A9F41812B744C
-1ff93bdab1e89f4b7554f22c3bfe3535  out/.thinlto-cache/llvmcache-84F0E9B124B7E294807827C43186459C4E76275F
--rw------- 1 runner runner 1500352 Oct  3 13:31 out/.thinlto-cache/llvmcache-84F0E9B124B7E294807827C43186459C4E76275F
-87360ca5b439acc3061be9b57b9f11cc  out/.thinlto-cache/llvmcache-81423BB8B4B1D9509A4F46FE27839E0DBBFA73A4
--rw------- 1 runner runner 1649192 Oct  3 13:33 out/.thinlto-cache/llvmcache-81423BB8B4B1D9509A4F46FE27839E0DBBFA73A4
+-rw-r--r-- 1 runner runner 1267324 Oct  3 14:12 out/kernel/events/core.o
+78941215a51cfc8b9a3bb0c6a664c267  out/vmlinux
+-rwxr-xr-x 1 runner runner 855645240 Oct  3 14:37 out/vmlinux
+10c06338132bc9e2e93c688b85b296f7  out/.tmp_System.map
+-rw-r--r-- 1 runner runner 10379147 Oct  3 14:37 out/.tmp_System.map
+553c7de1a500a5f40242f393ac51f29e  out/.thinlto-cache/llvmcache-74D330C84821BF04C499FF29E8992DE38918B9AB
+-rw------- 1 runner runner 1714160 Oct  3 14:29 out/.thinlto-cache/llvmcache-74D330C84821BF04C499FF29E8992DE38918B9AB
+70c89240f0b50206e5c9fbba762ca43d  out/.thinlto-cache/llvmcache-708DB32E4FEFC428714C6C13C7344F8A12AD7507
+-rw------- 1 runner runner 1072408 Oct  3 14:35 out/.thinlto-cache/llvmcache-708DB32E4FEFC428714C6C13C7344F8A12AD7507
+fc11de1f0826737f5c3e71166b01746b  out/.thinlto-cache/llvmcache-44634FC8AC9D872A4795F27DAF2DFAEC75EE0990
+-rw------- 1 runner runner 1719216 Oct  3 14:36 out/.thinlto-cache/llvmcache-44634FC8AC9D872A4795F27DAF2DFAEC75EE0990
+b2cc4b04bae17f8b08ffec2d6546d91f  out/.thinlto-cache/llvmcache-B8A03DBFC18ED482D2EE51F78AA7A77F457AF767
+-rw------- 1 runner runner 1146888 Oct  3 14:32 out/.thinlto-cache/llvmcache-B8A03DBFC18ED482D2EE51F78AA7A77F457AF767
 ---- build.log errors ----
-6037:make[2]: *** [../scripts/Makefile.modpost:108: __modpost] Error 1
-6038:make[1]: *** [/home/runner/work/a72-kernel-build/a72-kernel-build/kernel_workspace/android-kernel/Makefile:1502: modules] Error 2
-6040:make: *** [Makefile:146: sub-make] Error 2
+6038:make[2]: *** [../scripts/Makefile.modpost:108: __modpost] Error 1
+6039:make[1]: *** [/home/runner/work/a72-kernel-build/a72-kernel-build/kernel_workspace/android-kernel/Makefile:1502: modules] Error 2
+6042:make: *** [Makefile:146: sub-make] Error 2
 ---- build.log tail 120 ----
-  CC      drivers/misc/mediatek/typec/tcpc/tcpm.o
-  CC      drivers/misc/mediatek/trusted_mem/tee_impl/tee_invoke.o
-  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_ta.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_thermal_ipi.o
-  CC      drivers/misc/mediatek/trusted_mem/tee_impl/tee_ops.o
+  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_ts_6359vcore.o
   CC      drivers/misc/mediatek/typec/tcpc/tcpci.o
-  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_mutt_gen97.o
   CC      drivers/misc/mediatek/trusted_mem/mtee_devices.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_pmic_efuse.o
+  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_bcct_v1.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_dbg_info.o
+  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_ts_6359vproc.o
   CC      drivers/misc/mediatek/trusted_mem/mtee_impl/mtee_ops.o
   CC      drivers/misc/mediatek/typec/tcpc/tcpci_alert.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_ts_6359vcore.o
-  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_bcct_v1.o
   CC      drivers/misc/mediatek/trusted_mem/mtee_impl/mtee_invoke.o
+  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_ts_6359vgpu.o
+  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_atm.o
   CC      drivers/misc/mediatek/typec/tcpc/rt_pd_manager.o
   AR      drivers/misc/mediatek/trusted_mem/trusted_mem.o
   AR      drivers/misc/mediatek/trusted_mem/tee_impl.o
   AR      drivers/misc/mediatek/trusted_mem/mtee_impl.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_ts_6359vproc.o
   AR      drivers/misc/mediatek/trusted_mem/built-in.o
-  CC      drivers/misc/mediatek/vibrator/vibrator_drv.o
+  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_ntc_cust.o
+  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_ts_6359tsx.o
   CC      drivers/misc/mediatek/typec/tcpc/tcpci_event.o
-  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_atm.o
-  CC      drivers/misc/mediatek/vibrator/mt6853/vibrator.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_ts_6359vgpu.o
+  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_battery.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_core.o
+  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_ts_6359dcxo.o
+  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_dtm.o
+  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_bts.o
+  CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine.o
+  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_sysrst.o
+  AR      drivers/misc/mediatek/thermal/mt6853/src/built-in.o
+  AR      drivers/misc/mediatek/thermal/mt6853/built-in.o
+  CC      drivers/misc/mediatek/udi/udi_v3/mtk_udi.o
+  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_btsmdpa.o
+  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt.o
+  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_VR_FPS.o
+  AR      drivers/misc/mediatek/udi/udi_v3/built-in.o
+  AR      drivers/misc/mediatek/udi/built-in.o
+  CC      drivers/misc/mediatek/thermal/common/mtk_thermal_timer.o
+  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_btsnrpa.o
+  CC      drivers/misc/mediatek/typec/tcpc/pd_dpm_core.o
+  AR      drivers/misc/mediatek/thermal/common/coolers/built-in.o
+  CC      drivers/misc/mediatek/usb_boost/usb_boost.o
+  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_cpu_noBank.o
+  CC      drivers/misc/mediatek/usb_boost/v1/usb_boost_plat.o
+  CC      drivers/misc/mediatek/typec/tcpc/pd_dpm_uvdm.o
+  CC      drivers/misc/mediatek/vibrator/vibrator_drv.o
+  AR      drivers/misc/mediatek/usb_boost/v1/built-in.o
+  AR      drivers/misc/mediatek/usb_boost/built-in.o
+  CC      drivers/misc/mediatek/typec/tcpc/pd_dpm_alt_mode_dp.o
+  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_pa.o
+  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_pa_thput.o
+  CC      drivers/misc/mediatek/vibrator/mt6853/vibrator.o
+  CC      drivers/misc/mediatek/typec/tcpc/pd_dpm_pdo_select.o
   AR      drivers/misc/mediatek/vibrator/mt6853/built-in.o
   AR      drivers/misc/mediatek/vibrator/built-in.o
   CC      drivers/misc/mediatek/vpu/mt6853/dummy.o
   AR      drivers/misc/mediatek/vpu/mt6853/built-in.o
   AR      drivers/misc/mediatek/vpu/built-in.o
-  CC      drivers/misc/mediatek/typec/u3_switch/usb_switch.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_ts_6359tsx.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine.o
-  AR      drivers/misc/mediatek/typec/u3_switch/built-in.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_ntc_cust.o
-  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_dtm.o
-  CC      drivers/misc/mediatek/thermal/mt6853/src/mtk_ts_6359dcxo.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_battery.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt.o
-  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_sysrst.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_dpm_core.o
-  AR      drivers/misc/mediatek/thermal/mt6853/src/built-in.o
-  AR      drivers/misc/mediatek/thermal/mt6853/built-in.o
-  CC      drivers/misc/mediatek/zone_movable_cma/single_cma.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_bts.o
-  CC      drivers/misc/mediatek/thermal/common/coolers/mtk_cooler_VR_FPS.o
-  CC      drivers/misc/mediatek/zone_movable_cma/zmc_notify.o
-  AR      drivers/misc/mediatek/zone_movable_cma/built-in.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_dpm_uvdm.o
-  CC      drivers/misc/mediatek/thermal/common/mtk_thermal_timer.o
-  AR      drivers/misc/mediatek/thermal/common/coolers/built-in.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_btsmdpa.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_dpm_alt_mode_dp.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_btsnrpa.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_dpm_pdo_select.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_cpu_noBank.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_pa.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_dpm_reaction.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_pa_thput.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_snk.o
   CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_pmic.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_src.o
+  CC      drivers/misc/mediatek/zone_movable_cma/single_cma.o
   CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_charger.o
-  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_vdm.o
+  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_snk.o
+  CC      drivers/misc/mediatek/zone_movable_cma/zmc_notify.o
+  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_src.o
+  AR      drivers/misc/mediatek/zone_movable_cma/built-in.o
   CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_wmt.o
+  CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_vdm.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_drs.o
   CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_tsAll.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_prs.o
-  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_imgsensor.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_vcs.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_dbg.o
+  CC      drivers/misc/mediatek/thermal/common/thermal_zones/mtk_ts_imgsensor.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_tcp.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_process_evt_com.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_src.o
-  AR      drivers/misc/mediatek/thermal/common/thermal_zones/built-in.o
-  AR      drivers/misc/mediatek/thermal/common/built-in.o
-  AR      drivers/misc/mediatek/thermal/built-in.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_snk.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_ufp.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_vcs.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_dfp.o
+  AR      drivers/misc/mediatek/thermal/common/thermal_zones/built-in.o
+  AR      drivers/misc/mediatek/thermal/common/built-in.o
+  AR      drivers/misc/mediatek/thermal/built-in.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_dr.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_drs.o
   CC      drivers/misc/mediatek/typec/tcpc/pd_policy_engine_prs.o
@@ -211,9 +210,11 @@ b46490b076d997bccaa5cce56180e0f0  out/.thinlto-cache/llvmcache-513863286E4161080
   LD [M]  kernel/kheaders.lto.o
   LD [M]  net/ipv4/tcp_htcp.lto.o
   LD [M]  net/ipv4/tcp_westwood.lto.o
+  GZIP    arch/arm64/boot/Image.gz
   MODPOST 5 modules
 ERROR: "mtk_wcn_wmt_adie_workable" [drivers/misc/mediatek/connectivity/bt/mt66xx/wmt/bt_drv_.lto.ko] undefined!
 make[2]: *** [../scripts/Makefile.modpost:108: __modpost] Error 1
 make[1]: *** [/home/runner/work/a72-kernel-build/a72-kernel-build/kernel_workspace/android-kernel/Makefile:1502: modules] Error 2
+make[1]: *** Waiting for unfinished jobs....
 make[1]: Leaving directory '/home/runner/work/a72-kernel-build/a72-kernel-build/kernel_workspace/android-kernel/out'
 make: *** [Makefile:146: sub-make] Error 2
