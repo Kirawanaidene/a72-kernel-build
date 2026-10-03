@@ -156,28 +156,23 @@ jobs:
           # 原因：exfat 的 `void buf_lock(struct super_block*, u32)` 是【函数】，
           #      MTK stp_uart.c 的 `spinlock_t buf_lock;` 是【全局变量】，
           #      两者都进了 built-in.o → 链接器撞名。
+          # ★★★ Run#16/#17 两次失败与最终修法
+          # Run#16: ld.lld: error: duplicate symbol: buf_lock
+          #    exfat_cache.c:596  `void buf_lock(struct super_block*, u32)`  ← 函数
+          #    .../linux/stp_uart.c:119  `spinlock_t buf_lock;`              ← 全局变量
+          # Run#17: 批量 static 后 → "static declaration of 'exfat_bitmap_test'
+          #         follows non-static declaration"（头文件用 TAB 对齐，sed 漏了）
           #
-          # exfat 里这类非 static 全局函数有几十个（fs_sync / fs_error /
-          # buf_release / find_last_cluster ...），都是潜在撞名点。
-          # 内核惯例：文件内私有的辅助函数一律 static。
-          # ★ 安全前提（已本地实测验证）：exfat 唯一需要 EXPORT_SYMBOL 的是
-          #   exfat_api.c 的 19 个驼峰函数（FsMountVol / FsLookupFile ...），
-          #   正则只匹配全小写 [a-z_]，天然不会动它们。
-          #   实测确认：无任何导出符号被误加 static。
-          echo "==== 修 exfat 全局符号撞名 ===="
-          for f in fs/exfat/*.c fs/exfat/*.h; do
-            [ -f "$f" ] || continue
-            # 函数定义：行首 类型+空格+小写函数名(
-            sed -i -E 's/^(void|int|u32|u64|s32|bool|unsigned long|struct [a-z_]+ \*) +([a-z_][a-z0-9_]*)\(/static \1 \2(/' "$f"
-            # 函数原型：类型 + 多个空格 + 名字 + (  （头文件里对齐用了多空格）
-            sed -i -E 's/^(void|int|u32|u64|s32|bool) +([a-z_][a-z0-9_]*)\(/static \1 \2(/' "$f"
-          done
-          echo "---- buf_lock 修改结果 ----"
-          grep -n "buf_lock" fs/exfat/exfat_cache.c fs/exfat/exfat_cache.h | head -4
-          echo "---- 导出函数应保持非 static ----"
+          # ★ 本地分析结论：buf_lock 等 48 个 exfat 函数是【跨文件共享】的
+          #   （exfat_cache.c 定义 + exfat_core.c 调用）→ 加 static 会破坏编译。
+          #   正确做法是【改名】加 exfat_ 前缀，保留全局可见性。
+          echo "==== 修 exfat 符号撞名（改名加 exfat_ 前缀）===="
+          python3 fs_exfat_rename.py
+          echo "---- 改名后检查 ----"
+          grep -n "exfat_buf_lock" fs/exfat/exfat_cache.c | head -3
+          grep -n "buf_lock" fs/exfat/exfat_cache.c fs/exfat/exfat_cache.h | head -3 || echo "  (原 buf_lock 已全部改名)"
+          echo "---- 导出函数应保持不变 ----"
           grep -nE "^(static )?int FsMountVol" fs/exfat/exfat_api.c | head -2
-          echo "---- 抽查 ----"
-          grep -nE "^(static )?void (fs_sync|fs_error|buf_release)\(" fs/exfat/exfat_core.c fs/exfat/exfat_cache.c 2>/dev/null | head -6
 
           mkdir -p out
           cp $GITHUB_WORKSPACE/kernel_dot_config out/.config
