@@ -199,15 +199,27 @@ jobs:
           #     我把它们全关掉 → 代码生成方式变了 → Image 与原厂差 -1,028,080 字节。
           #     ★ Image header 的 code0 差正好 0x80000（512KB），就是 LTO 布局差异。
           #  所以：只改 KALLSYMS_ALL（目标），其余【全部保持原厂】。
-          ./scripts/config --file out/.config -e KALLSYMS_ALL
+          #  ★★ Run#22 新增：THINLTO 也是原厂配置，必须显式打开 ★★
+          #  实测对照（Run#19无LTO / Run#21 full LTO / 原厂）：
+          #      Image 47,708,176 / 56,909,840 / 48,736,256
+          #    full LTO 让 .text 膨胀 +9.2MB，符号全体后移 ~9.1MB。
+          #  而 Makefile:908-913 显示 CONFIG_THINLTO 决定 -flto=thin 还是 -flto：
+          #      ifdef CONFIG_THINLTO
+          #        lto-clang-flags := -flto=thin      ← ThinLTO，体积接近非 LTO
+          #      else
+          #        lto-clang-flags := -flto           ← full LTO，体积大
+          #  原厂 config 明确写着 CONFIG_THINLTO=y → 必定是 ThinLTO。
+          ./scripts/config --file out/.config -e KALLSYMS_ALL -e THINLTO
           make -j"$(nproc)" O=out ARCH=arm64 olddefconfig
-          # olddefconfig 可能重置，再确认一次（仍不动 LTO —— 保持原厂 y）
-          ./scripts/config --file out/.config -e KALLSYMS_ALL
+          # olddefconfig 可能重置，再确认一次
+          ./scripts/config --file out/.config -e KALLSYMS_ALL -e THINLTO
           make -j"$(nproc)" O=out ARCH=arm64 olddefconfig
 
-          # 探针：确认 LTO 保持原厂状态（这是同源性的关键）
-          echo "LTO 实际状态: $(grep -E '^CONFIG_LTO=|^# CONFIG_LTO is not set' out/.config || echo '<无>')"
-          echo "LTO_CLANG:   $(grep -E '^CONFIG_LTO_CLANG=|^# CONFIG_LTO_CLANG is not set' out/.config || echo '<无>')"
+          # 探针：确认 LTO/THINLTO 保持原厂状态（这是同源性的关键）
+          for k in LTO LTO_CLANG THINLTO CFI_CLANG; do
+            printf "  CONFIG_%-14s = " "$k"
+            grep -E "^CONFIG_$k=|^# CONFIG_$k is not set" out/.config || echo "<无>"
+          done
 
           echo "==== 关键配置自检 ===="
           for k in LTO LTO_CLANG LTO_CLANG_THIN THINTOOLCHAIN CFI_CLANG LOCALVERSION LOCALVERSION_AUTO KALLSYMS KALLSYMS_ALL DEBUG_INFO DEBUG_INFO_DWARF4 BT MTK_COMBO_BT MTK_COMBO_COMM; do
