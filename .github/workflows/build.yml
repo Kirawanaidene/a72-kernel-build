@@ -118,79 +118,14 @@ jobs:
           for i in 1 2 3 4 5; do
             rm -rf android-kernel
             if git clone --depth=1 -b android12 \
-              https://github.com/whjddzyx/android_kernel_oppo_mtk6853.git android-kernel; then break; fi
+              https://github.com/Winkmoon/oppo_kernel_mt6885-mt6853-clean.git android-kernel; then break; fi
             echo "!! kernel clone 失败，重试 $i"; sleep 10
           done
           cd android-kernel && git log -1 --oneline
 
-      # ---------- 【新增 A】KernelSU 接线侦察（只报告，便于排障） ----------
-      - name: Recon KernelSU integration
-        run: |
-          cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel/4.14.186
-          echo "==== KSU 目录 ===="
-          ls -la KernelSU 2>/dev/null || echo "(无 KernelSU 目录)"
-          echo "==== 树内 .patch 文件 ===="
-          find . -name '*.patch' -not -path './out/*' 2>/dev/null | head -40 || true
-          echo "==== Makefile/Kconfig 中的 KernelSU 引用 ===="
-          grep -rn "KernelSU" --include=Makefile --include=Kconfig . 2>/dev/null | head -20 || echo "(无)"
-          echo "==== 含 ksu_ 的源文件（前 30） ===="
-          grep -rln "ksu_" --include=*.c --include=*.h . 2>/dev/null | head -30 || echo "(无)"
-
-      # ---------- 【新增 B】摘除 KernelSU ----------
-      # Run#7 失败复盘：KSU 目录在 ./KernelSU，drivers/kernelsu 是指向 ../KernelSU/kernel 的
-      # **符号链接**；`rm -rf KernelSU` 删掉链接目标后，drivers/Kconfig:229 那行小写引用
-      #   source "drivers/kernelsu/Kconfig"
-      # 找不到文件 -> olddefconfig 直接 Error 2（原 sed 只匹配大写 "KernelSU"，删不到它）。
-      # 修法核心：**不靠 sed 猜引用**，改为「掏空源码 + 建空壳桩」，任何残留引用都能解析。
-      - name: Strip KernelSU
-        run: |
-          cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel/4.14.186
-          echo "==== 摘除前的接线情况 ===="
-          ls -ld KernelSU drivers/kernelsu 2>&1 || true
-          (readlink drivers/kernelsu && echo "(drivers/kernelsu 是符号链接)") 2>/dev/null || true
-          grep -rniE "kernelsu" drivers/Kconfig Makefile 2>/dev/null || true
-
-          # 1) 反向应用 KSU 自带补丁
-          if [ -d KernelSU ]; then
-            find KernelSU -name '*.patch' 2>/dev/null | while read -r p; do
-              echo "revert: $p"
-              git apply -R --whitespace=nowarn "$p" 2>/dev/null \
-                || echo "  !! 反向应用失败（不致命）: $p"
-            done
-          fi
-
-          # 2) 删掉把 KSU 编进来的 obj-y / obj-$(CONFIG_KSU) 行（大小写都覆盖）
-          for f in $(grep -rliE "kernelsu" --include=Makefile . 2>/dev/null); do
-            sed -i -E '/kernelsu/d' "$f" && echo "cleaned Makefile: $f"
-          done
-
-          # 3) 删 KSU 源码目录 + 断链
-          rm -rf KernelSU
-          rm -f drivers/kernelsu
-
-          # 4)【关键】建空壳桩：即便还有引用行残留也能解析成功，且不编进任何东西
-          mkdir -p drivers/kernelsu
-          printf '# KSU stub (removed by CI)\n' > drivers/kernelsu/Kconfig
-          : > drivers/kernelsu/Makefile
-          echo "---- 桩已建 ----"; ls -la drivers/kernelsu
-
-          # 5) 残留报告（不硬失败，最终以 System.map 自检为准）
-          echo "==== 残留检查 ===="
-          R=$(grep -rlniE "ksu_|kernelsu" --include=*.c --include=*.h . 2>/dev/null | head -20 || true)
-          if [ -n "$R" ]; then echo "!! C/H 仍有残留："; echo "$R"; else echo "OK: C/H 无残留"; fi
-
-          # 6) 立刻试跑 olddefconfig —— 快速失败，别等编译几十分钟后才发现
-          export ARCH=arm64
-          export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc32/bin:$PATH
-          export CC=clang
-          mkdir -p out && cp $GITHUB_WORKSPACE/kernel_dot_config out/.config
-          echo "==== 预检 olddefconfig（KSU 摘除后应通过）===="
-          make O=out ARCH=arm64 olddefconfig 2>&1 | tail -20
-
-      # ---------- 配置 + 编译 ----------
       - name: Configure and build stock kernel
         run: |
-          cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel/4.14.186
+          cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
           export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc32/bin:$PATH
           export ARCH=arm64
           export SUBARCH=arm64
@@ -213,7 +148,9 @@ jobs:
           make -j"$(nproc)" O=out ARCH=arm64 olddefconfig
 
           # 关掉原厂为 n、但会被树内默认值误开的 3 项
-          ./scripts/config --file out/.config -d BT -d MTK_COMBO_BT -d MTK_COMBO_COMM
+          ./scripts/config --file out/.config -e KALLSYMS_ALL -e DEBUG_INFO -e DEBUG_INFO_BTF -e DEBUG_INFO_DWARF4
+          make -j"$(nproc)" O=out ARCH=arm64 olddefconfig
+          ./scripts/config --file out/.config -e KALLSYMS_ALL -e DEBUG_INFO_BTF
           make -j"$(nproc)" O=out ARCH=arm64 olddefconfig
 
           echo "==== 关键配置自检 ===="
@@ -234,11 +171,12 @@ jobs:
           ls -lh out/System.map out/vmlinux out/arch/arm64/boot/Image* 2>&1 || true
           # 供本地比对的明文配置副本（.config 是隐藏文件，artifact 默认不收）
           cp out/.config out/kernel.config.txt
+          cp out/System.map out/System.map.full
 
       # ---------- 自检 ----------
       - name: Verify products
         run: |
-          OUT="$GITHUB_WORKSPACE/kernel_workspace/android-kernel/4.14.186/out"
+          OUT="$GITHUB_WORKSPACE/kernel_workspace/android-kernel/out"
           for f in "$OUT/System.map" "$OUT/vmlinux" "$OUT/arch/arm64/boot/Image"; do
             [ -s "$f" ] || { echo "MISSING: $f"; exit 1; }
             ls -l "$f"
@@ -247,6 +185,23 @@ jobs:
           N=$(grep -c -iE " ksu_|kernelsu" "$OUT/System.map" || true)
           echo "KSU 符号数 = $N （必须为 0）"
           test "$N" -eq 0 || { echo "!! 仍含 KernelSU，偏移不可用"; exit 1; }
+
+          echo "==== Image size check ==="
+          IMG="$OUT/arch/arm64/boot/Image"
+          SZ=$(stat -c%s "$IMG")
+          echo "  built = $SZ   factory = 48736256"
+          if [ "$SZ" -eq 48736256 ]; then echo "  EXACT MATCH"
+          elif [ "$SZ" -lt 50000000 ]; then echo "  IN RANGE (likely same-source)"
+          else echo "  TOO BIG (Run#8=52013072) - source may differ"; fi
+
+          echo "==== 9 target data symbols ==="
+          for s in init_task init_cred root_task_group security_hook_heads selinux_enforcing selinux_blob_sizes loggers nfulnl_logger sysctl_bootid; do
+            printf "  %-24s " "$s"
+            grep -E " [bBdDrR] $s" "$OUT/System.map" | head -1 || echo "MISSING"
+          done
+
+          echo "==== BTF symbols ==="
+          grep -E "__start_BTF|__stop_BTF" "$OUT/System.map" || echo "  NO BTF"
 
           IMG="$OUT/arch/arm64/boot/Image"
           echo "Image 大小 = $(stat -c%s "$IMG")  (原厂 48736256)"
@@ -262,8 +217,8 @@ jobs:
           if-no-files-found: error
           compression-level: 6
           path: |
-            kernel_workspace/android-kernel/4.14.186/out/System.map
-            kernel_workspace/android-kernel/4.14.186/out/kernel.config.txt
+            kernel_workspace/android-kernel/out/System.map
+            kernel_workspace/android-kernel/out/kernel.config.txt
 
       - name: Upload Image
         uses: actions/upload-artifact@v4
@@ -271,4 +226,4 @@ jobs:
           name: stock-image
           if-no-files-found: error
           compression-level: 6
-          path: kernel_workspace/android-kernel/4.14.186/out/arch/arm64/boot/
+          path: kernel_workspace/android-kernel/out/arch/arm64/boot/
