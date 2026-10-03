@@ -209,14 +209,29 @@ jobs:
           #      else
           #        lto-clang-flags := -flto           ← full LTO，体积大
           #  原厂 config 明确写着 CONFIG_THINLTO=y → 必定是 ThinLTO。
-          ./scripts/config --file out/.config -e KALLSYMS_ALL -e THINLTO
+          #
+          # ★★ Run#22 失败教训：`-e THINLTO` 会被 olddefconfig 静默清掉 ★★
+          #  原因（本地源码树 arch/Kconfig:630-660 确认）：
+          #    config THINLTO 是 `bool`（无 prompt），位于 LTO_NONE/LTO_CLANG
+          #    这个 `choice` 块【之外】。olddefconfig 处理 choice 时按 default
+          #    重算，把 choice 外的 THINLTO 恢复成 n。
+          #    而 LTO_CLANG 只 `select LTO` / `select THIN_ARCHIVES`，
+          #    并【没有】 select THINLTO。
+          #  正确做法：olddefconfig 先跑完（把 choice 定好），
+          #          然后【直接改 .config 文本】补上 THINLTO，
+          #          之后【绝不再跑 olddefconfig】。
           make -j"$(nproc)" O=out ARCH=arm64 olddefconfig
-          # olddefconfig 可能重置，再确认一次
-          ./scripts/config --file out/.config -e KALLSYMS_ALL -e THINLTO
+          ./scripts/config --file out/.config -e KALLSYMS_ALL
           make -j"$(nproc)" O=out ARCH=arm64 olddefconfig
+          # ---- 最后一轮：直接写 .config，不再 olddefconfig ----
+          ./scripts/config --file out/.config -e KALLSYMS_ALL
+          sed -i 's/^# CONFIG_THINLTO is not set$/CONFIG_THINLTO=y/' out/.config
+          grep -q '^CONFIG_THINLTO=y' out/.config || echo 'CONFIG_THINLTO=y' >> out/.config
+          echo "==== 改完后的 LTO 相关（不再 olddefconfig）===="
+          grep -E '^CONFIG_(LTO|LTO_CLANG|THINLTO|CFI_CLANG|KALLSYMS_ALL)=' out/.config
 
           # 探针：确认 LTO/THINLTO 保持原厂状态（这是同源性的关键）
-          for k in LTO LTO_CLANG THINLTO CFI_CLANG; do
+          for k in LTO LTO_CLANG THINLTO CFI_CLANG KALLSYMS_ALL; do
             printf "  CONFIG_%-14s = " "$k"
             grep -E "^CONFIG_$k=|^# CONFIG_$k is not set" out/.config || echo "<无>"
           done
@@ -360,11 +375,18 @@ jobs:
             echo "---- struct selinux_state 成员偏移 ----" | tee -a "$R"
             # pahole -C selinux_state vmlinux  最直接
             ( which pahole >/dev/null 2>&1 && pahole -C selinux_state out/vmlinux ) 2>&1 | tee -a "$R"
-            echo "---- 全部 struct（含 task_struct/cred/rt_waiter_node）----" | tee -a "$R"
-            for s in selinux_state task_struct cred rt_waiter_node rt_mutex_waiter file mm_struct; do
+            echo "---- 全部 struct（generate_target.py 需要的 + 补充）----" | tee -a "$R"
+            # generate_target.py 需要的 19 个 btf.field 对应结构体全列
+            # ★ rt_waiter_node 在 4.14 树里【不存在】（4.14 的 rt_mutex_waiter 内联了
+            #   waiter_tree 的 prio/deadline，6.x 才拆成独立 struct rt_waiter_node）
+            for s in selinux_state task_struct cred rt_waiter_node rt_mutex_waiter file mm_struct nf_logger ctl_table; do
               echo "### $s" | tee -a "$R"
               ( which pahole >/dev/null 2>&1 && pahole -C "$s" out/vmlinux ) 2>&1 | tee -a "$R"
             done
+            # 4.14 里 waiter 相关字段都在 rt_mutex_waiter 内联，
+            # 额外把 rt_mutex_waiter 的完整布局再打一次（WAITER_* 宏要用）
+            echo "### rt_mutex_waiter (full, for WAITER_* macros)" | tee -a "$R"
+            ( which pahole >/dev/null 2>&1 && pahole -C rt_mutex_waiter -s out/vmlinux ) 2>&1 | tee -a "$R"
             echo "---- readelf 备用方案：debug_info 里搜 selinux_state ----" | tee -a "$R"
             ( llvm-readelf --debug-dump=info out/vmlinux 2>/dev/null || readelf --debug-dump=info out/vmlinux 2>/dev/null ) \
               | grep -A 60 "DW_AT_name.*: selinux_state" | head -80 | tee -a "$R"
