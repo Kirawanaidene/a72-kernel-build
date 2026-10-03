@@ -173,6 +173,9 @@ jobs:
             -d LTO -d LTO_CLANG -d LTO_CLANG_THIN -d CFI_CLANG -d CFI_CLANG_THIN
           make -j"$(nproc)" O=out ARCH=arm64 olddefconfig
 
+          # 探针：把 LTO 是否真被关掉写进报告（若仍为 y 说明树内默认值把它又开了）
+          echo "LTO 实际状态: $(grep -E '^CONFIG_LTO=|^# CONFIG_LTO is not set' out/.config || echo '<无>')"
+
           echo "==== 关键配置自检 ===="
           for k in LTO LTO_CLANG LTO_CLANG_THIN THINTOOLCHAIN CFI_CLANG LOCALVERSION LOCALVERSION_AUTO KALLSYMS KALLSYMS_ALL DEBUG_INFO DEBUG_INFO_DWARF4 BT MTK_COMBO_BT MTK_COMBO_COMM; do
             printf "  CONFIG_%-18s = " "$k"
@@ -182,6 +185,10 @@ jobs:
           # ★ 这棵树的 Makefile 里 `PHONY := _all` 且 `_all:` 是空目标，
           #   所以不带 target 的 make 什么都不会编（只跑 prepare 就退出）。
           #   必须显式指定 all (= vmlinux)。
+          # ★ GitHub Actions 默认跑 `bash -e`，make 非 0 会直接终止整个步骤，
+          #   导致后面的报告代码块永不执行（Run#14/#15 都因此丢了报告）。
+          #   所以整段先关掉 -e，捕获退出码后再继续。
+          set +e
           set -o pipefail
           make -j"$(nproc)" O=out ARCH=arm64 \
             CC="ccache clang" \
@@ -234,18 +241,23 @@ jobs:
       # ---------- 自检 ----------
       - name: Collect build diagnostics
         if: always()
+        continue-on-error: true
         run: |
+          set +e
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel || exit 0
           mkdir -p diag
           cp -f build.log diag/build.log 2>/dev/null || true
           echo "==== build.log 错误行 ====" | tee diag/log.txt
           grep -nE "Error [0-9]+|error:|fatal:|No rule to make|undefined reference" build.log 2>/dev/null | tail -40 | tee -a diag/log.txt || echo "  (无)" | tee -a diag/log.txt
-          echo "==== out 目录内容 ====" | tee diag/log.txt
+          echo "==== out 目录内容 ====" | tee -a diag/log.txt
           ls -la out/ 2>&1 | head -40 | tee -a diag/log.txt
           echo "==== .config 关键项 ====" | tee -a diag/log.txt
-          for k in KALLSYMS KALLSYMS_ALL DEBUG_INFO DEBUG_INFO_BTF DEBUG_INFO_DWARF4                    LOCALVERSION BT MTK_COMBO_BT MTK_COMBO_COMM SECURITY_APPARMOR                    SECURITYFS KVM ARM64_VA_BITS PANIC_ON_OOPS; do
+          for k in KALLSYMS KALLSYMS_ALL DEBUG_INFO DEBUG_INFO_BTF DEBUG_INFO_DWARF4 \
+                   LTO LTO_CLANG THINTOOLCHAIN CFI_CLANG LOCALVERSION \
+                   BT MTK_COMBO_BT MTK_COMBO_COMM SECURITY_APPARMOR \
+                   SECURITYFS KVM ARM64_VA_BITS PANIC_ON_OOPS; do
             printf "  CONFIG_%-24s = " "$k" | tee -a diag/log.txt
-            (grep -E "^CONFIG_$k=|^# CONFIG_$k is not set" out/.config || echo "<缺>") | tee -a diag/log.txt
+            (grep -E "^CONFIG_$k=|^# CONFIG_$k is not set" out/.config 2>/dev/null || echo "<缺>") | tee -a diag/log.txt
           done
           echo "==== 产物 ====" | tee -a diag/log.txt
           ls -l out/System.map out/vmlinux out/arch/arm64/boot/Image 2>&1 | tee -a diag/log.txt
@@ -287,7 +299,13 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
+          set +e
           cd $GITHUB_WORKSPACE
+          mkdir -p build_result
+          # 把 diag 也合并进 build_result（artifact 通道不可靠，git 更稳）
+          cp -f kernel_workspace/android-kernel/diag/log.txt build_result/diag_log.txt 2>/dev/null || true
+          cp -f kernel_workspace/android-kernel/diag/build.log build_result/diag_build.log 2>/dev/null || true
+
           git config user.email "ci@local"
           git config user.name "CI Bot"
           git add -f build_result 2>/dev/null || true
