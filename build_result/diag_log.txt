@@ -1,61 +1,25 @@
 ==== build.log 错误行 ====
-2935:../fs/exfat/exfat_bitmap.c:45:12: error: static declaration of 'exfat_bitmap_test' follows non-static declaration
-2941:../fs/exfat/exfat_bitmap.c:55:13: error: static declaration of 'exfat_bitmap_set' follows non-static declaration
-2947:../fs/exfat/exfat_bitmap.c:60:13: error: static declaration of 'exfat_bitmap_clear' follows non-static declaration
-2954:make[3]: *** [../scripts/Makefile.build:356: fs/exfat/exfat_bitmap.o] Error 1
-2955:make[2]: *** [../scripts/Makefile.build:671: fs/exfat] Error 2
-2956:make[1]: *** [/home/runner/work/a72-kernel-build/a72-kernel-build/kernel_workspace/android-kernel/Makefile:1245: fs] Error 2
-3129:make: *** [Makefile:146: sub-make] Error 2
 ==== out 目录内容 ====
-total 452
-drwxr-xr-x 22 runner runner   4096 Oct  3 11:25 .
-drwxr-xr-x 29 runner runner   4096 Oct  3 11:27 ..
--rw-r--r--  1 runner runner 168254 Oct  3 11:24 .config
--rw-r--r--  1 runner runner 168354 Oct  3 11:24 .config.old
--rw-r--r--  1 runner runner    658 Oct  3 11:24 .missing-syscalls.d
-drwxr-xr-x  2 runner runner   4096 Oct  3 11:27 .tmp_versions
--rw-r--r--  1 runner runner      2 Oct  3 11:24 .version
--rw-r--r--  1 runner runner    565 Oct  3 11:24 Makefile
-drwxr-xr-x  3 runner runner   4096 Oct  3 11:24 arch
-drwxr-xr-x  4 runner runner   4096 Oct  3 11:24 block
-drwxr-xr-x  2 runner runner   4096 Oct  3 11:24 certs
-drwxr-xr-x  3 runner runner   4096 Oct  3 11:24 crypto
-drwxr-xr-x 70 runner runner   4096 Oct  3 11:24 drivers
-drwxr-xr-x  2 runner runner   4096 Oct  3 11:24 firmware
-drwxr-xr-x 30 runner runner   4096 Oct  3 11:25 fs
-drwxr-xr-x  4 runner runner   4096 Oct  3 11:24 include
-drwxr-xr-x  2 runner runner   4096 Oct  3 11:24 init
-drwxr-xr-x  2 runner runner   4096 Oct  3 11:25 ipc
-drwxr-xr-x 16 runner runner  12288 Oct  3 11:27 kernel
-drwxr-xr-x 10 runner runner   4096 Oct  3 11:24 lib
-drwxr-xr-x  5 runner runner  12288 Oct  3 11:26 mm
--rw-r--r--  1 runner runner      0 Oct  3 11:24 modules.order
-drwxr-xr-x 26 runner runner   4096 Oct  3 11:24 net
-drwxr-xr-x  8 runner runner   4096 Oct  3 11:24 scripts
-drwxr-xr-x  6 runner runner   4096 Oct  3 11:26 security
-drwxr-xr-x 22 runner runner   4096 Oct  3 11:24 sound
-lrwxrwxrwx  1 runner runner      2 Oct  3 11:24 source -> ..
-drwxr-xr-x  2 runner runner   4096 Oct  3 11:24 usr
-drwxr-xr-x  3 runner runner   4096 Oct  3 11:24 virt
+ls: cannot access 'out/': No such file or directory
 ==== .config 关键项 ====
-  CONFIG_KALLSYMS                 = CONFIG_KALLSYMS=y
-  CONFIG_KALLSYMS_ALL             = CONFIG_KALLSYMS_ALL=y
-  CONFIG_DEBUG_INFO               = CONFIG_DEBUG_INFO=y
+  CONFIG_KALLSYMS                 = <缺>
+  CONFIG_KALLSYMS_ALL             = <缺>
+  CONFIG_DEBUG_INFO               = <缺>
   CONFIG_DEBUG_INFO_BTF           = <缺>
-  CONFIG_DEBUG_INFO_DWARF4        = CONFIG_DEBUG_INFO_DWARF4=y
-  CONFIG_LTO                      = # CONFIG_LTO is not set
-  CONFIG_LTO_CLANG                = # CONFIG_LTO_CLANG is not set
+  CONFIG_DEBUG_INFO_DWARF4        = <缺>
+  CONFIG_LTO                      = <缺>
+  CONFIG_LTO_CLANG                = <缺>
   CONFIG_THINTOOLCHAIN            = <缺>
   CONFIG_CFI_CLANG                = <缺>
-  CONFIG_LOCALVERSION             = CONFIG_LOCALVERSION=""
-  CONFIG_BT                       = # CONFIG_BT is not set
-  CONFIG_MTK_COMBO_BT             = # CONFIG_MTK_COMBO_BT is not set
-  CONFIG_MTK_COMBO_COMM           = # CONFIG_MTK_COMBO_COMM is not set
-  CONFIG_SECURITY_APPARMOR        = CONFIG_SECURITY_APPARMOR=y
-  CONFIG_SECURITYFS               = CONFIG_SECURITYFS=y
+  CONFIG_LOCALVERSION             = <缺>
+  CONFIG_BT                       = <缺>
+  CONFIG_MTK_COMBO_BT             = <缺>
+  CONFIG_MTK_COMBO_COMM           = <缺>
+  CONFIG_SECURITY_APPARMOR        = <缺>
+  CONFIG_SECURITYFS               = <缺>
   CONFIG_KVM                      = <缺>
-  CONFIG_ARM64_VA_BITS            = CONFIG_ARM64_VA_BITS=39
-  CONFIG_PANIC_ON_OOPS            = CONFIG_PANIC_ON_OOPS=y
+  CONFIG_ARM64_VA_BITS            = <缺>
+  CONFIG_PANIC_ON_OOPS            = <缺>
 ==== 产物 ====
 ls: cannot access 'out/System.map': No such file or directory
 ls: cannot access 'out/vmlinux': No such file or directory
@@ -64,85 +28,3 @@ ls: cannot access 'out/arch/arm64/boot/Image': No such file or directory
 /usr/bin/pahole
 v1.25
 ==== 与仓库原厂 config 的差异（olddefconfig 改了什么）====
-1,5893c1,5970
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-< 
-==== 差异行数 ====
-11863
