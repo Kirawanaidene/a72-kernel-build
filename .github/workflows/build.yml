@@ -147,8 +147,37 @@ jobs:
           export CROSS_COMPILE_ARM32=arm-linux-androideabi-
           export CLANG_TRIPLE=aarch64-linux-gnu-
           export PATH="$HOME/.local/bin:$PATH"
-          echo "==== pahole ===="
-          which pahole || echo "!! no pahole (BTF will fail)"
+
+          # ★★★ 修 Run#16 的链接失败：duplicate symbol: buf_lock
+          # 证据（build.log:6019-6021）：
+          #   ld.lld: error: duplicate symbol: buf_lock
+          #   >>> defined at exfat_cache.c:703  fs/exfat/exfat_cache.o
+          #   >>> defined at stp_uart.c  drivers/misc/mediatek/connectivity/.../stp_uart.o
+          # 原因：exfat 的 `void buf_lock(struct super_block*, u32)` 是【函数】，
+          #      MTK stp_uart.c 的 `spinlock_t buf_lock;` 是【全局变量】，
+          #      两者都进了 built-in.o → 链接器撞名。
+          #
+          # exfat 里这类非 static 全局函数有几十个（fs_sync / fs_error /
+          # buf_release / find_last_cluster ...），都是潜在撞名点。
+          # 内核惯例：文件内私有的辅助函数一律 static。
+          # ★ 安全前提（已本地实测验证）：exfat 唯一需要 EXPORT_SYMBOL 的是
+          #   exfat_api.c 的 19 个驼峰函数（FsMountVol / FsLookupFile ...），
+          #   正则只匹配全小写 [a-z_]，天然不会动它们。
+          #   实测确认：无任何导出符号被误加 static。
+          echo "==== 修 exfat 全局符号撞名 ===="
+          for f in fs/exfat/*.c fs/exfat/*.h; do
+            [ -f "$f" ] || continue
+            # 函数定义：行首 类型+空格+小写函数名(
+            sed -i -E 's/^(void|int|u32|u64|s32|bool|unsigned long|struct [a-z_]+ \*) +([a-z_][a-z0-9_]*)\(/static \1 \2(/' "$f"
+            # 函数原型：类型 + 多个空格 + 名字 + (  （头文件里对齐用了多空格）
+            sed -i -E 's/^(void|int|u32|u64|s32|bool) +([a-z_][a-z0-9_]*)\(/static \1 \2(/' "$f"
+          done
+          echo "---- buf_lock 修改结果 ----"
+          grep -n "buf_lock" fs/exfat/exfat_cache.c fs/exfat/exfat_cache.h | head -4
+          echo "---- 导出函数应保持非 static ----"
+          grep -nE "^(static )?int FsMountVol" fs/exfat/exfat_api.c | head -2
+          echo "---- 抽查 ----"
+          grep -nE "^(static )?void (fs_sync|fs_error|buf_release)\(" fs/exfat/exfat_core.c fs/exfat/exfat_cache.c 2>/dev/null | head -6
 
           mkdir -p out
           cp $GITHUB_WORKSPACE/kernel_dot_config out/.config
