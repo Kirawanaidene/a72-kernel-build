@@ -129,6 +129,11 @@ jobs:
       - name: Configure and build stock kernel
         continue-on-error: true
         run: |
+          # ★★★ 必须在【第一步】就关掉 errexit。
+          #    Run#18 教训：exfat 改名脚本放在第 170 行、set +e 在第 215 行，
+          #    脚本 exit 2（自检发现残留）时整个步骤被 bash -e 立即终止，
+          #    out/ 目录都还没建 → 3 分钟空跑，什么都没产出。
+          set +e
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
           export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc32/bin:$PATH
           export ARCH=arm64
@@ -167,7 +172,8 @@ jobs:
           #   （exfat_cache.c 定义 + exfat_core.c 调用）→ 加 static 会破坏编译。
           #   正确做法是【改名】加 exfat_ 前缀，保留全局可见性。
           echo "==== 修 exfat 符号撞名（改名加 exfat_ 前缀）===="
-          python3 fs_exfat_rename.py
+          cp -f $GITHUB_WORKSPACE/fs_exfat_rename.py ./fs_exfat_rename.py 2>/dev/null || true
+          python3 fs_exfat_rename.py || echo "!! 改名脚本返回非 0，继续编译（看后面链接错误）"
           echo "---- 改名后检查 ----"
           grep -n "exfat_buf_lock" fs/exfat/exfat_cache.c | head -3
           grep -n "buf_lock" fs/exfat/exfat_cache.c fs/exfat/exfat_cache.h | head -3 || echo "  (原 buf_lock 已全部改名)"
