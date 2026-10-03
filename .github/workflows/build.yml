@@ -154,14 +154,27 @@ jobs:
           cp $GITHUB_WORKSPACE/kernel_dot_config out/.config
           make -j"$(nproc)" O=out ARCH=arm64 olddefconfig
 
-          # 关掉原厂为 n、但会被树内默认值误开的 3 项
-          ./scripts/config --file out/.config -e KALLSYMS_ALL -e DEBUG_INFO -e DEBUG_INFO_BTF -e DEBUG_INFO_DWARF4
+          # ★★ 4.14 的两个硬约束（本地源码树已核实）：
+          #  1) DEBUG_INFO_BTF 在 4.14 的 Kconfig 里【不存在】（BTF 是 5.15+ 才有）
+          #     lib/Kconfig.debug 里搜不到 DEBUG_INFO_BTF，scripts/Makefile 里没有 pahole
+          #     → 用 -e DEBUG_INFO_BTF 是无效的，写进去也会被 olddefconfig 清掉
+          #  2) CONFIG_LTO=y 会走 LLVMgold 插件，而 4.14 树里 grep 不到 gold 相关实现
+          #     → LTO 阶段链接失败（这正是 17 分钟无产物的原因）
+          #  所以：只开 KALLSYMS_ALL（拿数据符号），关掉 LTO，放弃 BTF
+          ./scripts/config --file out/.config \
+            -e KALLSYMS_ALL \
+            -e DEBUG_INFO \
+            -e DEBUG_INFO_DWARF4 \
+            -d LTO -d LTO_CLANG -d LTO_CLANG_THIN -d LTO_NONE -d CFI_CLANG -d CFI_CLANG_THIN
           make -j"$(nproc)" O=out ARCH=arm64 olddefconfig
-          ./scripts/config --file out/.config -e KALLSYMS_ALL -e DEBUG_INFO_BTF
+          # olddefconfig 可能重置，再确认一次
+          ./scripts/config --file out/.config \
+            -e KALLSYMS_ALL -e DEBUG_INFO -e DEBUG_INFO_DWARF4 \
+            -d LTO -d LTO_CLANG -d LTO_CLANG_THIN -d CFI_CLANG -d CFI_CLANG_THIN
           make -j"$(nproc)" O=out ARCH=arm64 olddefconfig
 
           echo "==== 关键配置自检 ===="
-          for k in LTO LTO_CLANG THINTOOLCHAIN THINLTO CFI_CLANG LOCALVERSION LOCALVERSION_AUTO KALLSYMS KALLSYMS_ALL DEBUG_INFO DEBUG_INFO_BTF DEBUG_INFO_DWARF4 BT MTK_COMBO_BT MTK_COMBO_COMM; do
+          for k in LTO LTO_CLANG LTO_CLANG_THIN THINTOOLCHAIN CFI_CLANG LOCALVERSION LOCALVERSION_AUTO KALLSYMS KALLSYMS_ALL DEBUG_INFO DEBUG_INFO_DWARF4 BT MTK_COMBO_BT MTK_COMBO_COMM; do
             printf "  CONFIG_%-18s = " "$k"
             grep -E "^CONFIG_$k=|^# CONFIG_$k is not set" out/.config || echo "<缺>"
           done
@@ -180,44 +193,43 @@ jobs:
             all > build.log 2>&1
           RC=$?
           echo "==== make 退出码 = $RC ===="
-          echo "==== build.log 行数 = $(wc -l < build.log) ===="
+          echo "==== build.log 行数 = $(wc -l < build.log 2>/dev/null || echo 0) ===="
           echo "==== build.log 最后 60 行 ===="
-          tail -60 build.log
+          tail -60 build.log 2>/dev/null
           echo "==== 错误行 ===="
-          grep -nE "Error [0-9]+|error:|fatal:|No rule to make|undefined reference|Stop\." build.log | tail -40 || echo "  (无)"
+          grep -nE "Error [0-9]+|error:|fatal:|No rule to make|undefined reference|Stop\." build.log 2>/dev/null | tail -40 || echo "  (无)"
 
           echo "==== 产物清单 ===="
           ls -l out/System.map out/vmlinux out/arch/arm64/boot/Image* 2>&1 || true
-          find out -maxdepth 3 -name "Image*" -o -maxdepth 3 -name "vmlinux" -o -maxdepth 2 -name "System.map" 2>/dev/null | head -20 || true
 
           # ★ 不依赖 artifact —— 把结果写成明文文件，随仓库提交
+          # 注意：每条命令都必须容错，任一失败会毁掉整个 { } 输出
           mkdir -p "$GITHUB_WORKSPACE/build_result"
-          {
-            echo "make_exit_code=$RC"
-            echo "build_log_lines=$(wc -l < build.log)"
-            echo "---- key configs ----"
-            for k in KALLSYMS KALLSYMS_ALL DEBUG_INFO DEBUG_INFO_BTF DEBUG_INFO_DWARF4 \
-                     MODULES LTO THINTOOLCHAIN LOCALVERSION ARM64_VA_BITS PANIC_ON_OOPS; do
-              printf "CONFIG_%-22s = " "$k"
-              grep -E "^CONFIG_$k=|^# CONFIG_$k is not set" out/.config 2>/dev/null || echo "<缺>"
-            done
-            echo "---- products ----"
-            ls -l out/System.map out/vmlinux out/arch/arm64/boot/Image 2>&1 || true
-            echo "---- out dir top ----"
-            ls out/ 2>&1 | head -40
-            echo "---- boot dir ----"
-            ls -l out/arch/arm64/boot/ 2>&1 | head -20
-            echo "---- make rc ----"
-            echo "$RC"
-            echo "---- build.log errors ----"
-            grep -nE "Error [0-9]+|error:|fatal:|No rule to make|undefined reference|Stop\." build.log | tail -40 || true
-            echo "---- build.log tail ----"
-            tail -80 build.log
-          } > "$GITHUB_WORKSPACE/build_result/report.txt" 2>&1
+          R="$GITHUB_WORKSPACE/build_result/report.txt"
+          echo "make_exit_code=$RC" > "$R"
+          echo "build_log_lines=$(wc -l < build.log 2>/dev/null || echo 0)" >> "$R"
+          echo "---- key configs ----" >> "$R"
+          for k in KALLSYMS KALLSYMS_ALL DEBUG_INFO DEBUG_INFO_BTF DEBUG_INFO_DWARF4 \
+                   MODULES LTO LTO_CLANG THINTOOLCHAIN CFI_CLANG LOCALVERSION \
+                   ARM64_VA_BITS PANIC_ON_OOPS; do
+            printf "CONFIG_%-22s = " "$k" >> "$R"
+            ( grep -E "^CONFIG_$k=|^# CONFIG_$k is not set" out/.config 2>/dev/null || echo "<缺>" ) >> "$R"
+          done
+          echo "---- products ----" >> "$R"
+          ( ls -l out/System.map out/vmlinux out/arch/arm64/boot/Image 2>&1 || true ) >> "$R"
+          echo "---- out dir top ----" >> "$R"
+          ( ls out/ 2>&1 | head -40 || true ) >> "$R"
+          echo "---- boot dir ----" >> "$R"
+          ( ls -l out/arch/arm64/boot/ 2>&1 | head -20 || true ) >> "$R"
+          echo "---- big files md5 ----" >> "$R"
+          ( find out -maxdepth 3 -type f -size +1M 2>/dev/null | head -20 | while read -r f; do
+              echo "$(md5sum "$f" 2>/dev/null)"; ls -l "$f" 2>/dev/null
+            done ) >> "$R" 2>&1 || true
+          echo "---- build.log errors ----" >> "$R"
+          ( grep -nE "Error [0-9]+|error:|fatal:|No rule to make|undefined reference|Stop\." build.log 2>/dev/null | tail -40 || echo "  (无)" ) >> "$R"
+          echo "---- build.log tail 120 ----" >> "$R"
+          ( tail -120 build.log 2>/dev/null || echo "  (无 build.log)" ) >> "$R"
           cp -f build.log "$GITHUB_WORKSPACE/build_result/build.log" 2>/dev/null || true
-          # 大文件存在性用 md5 表示，避免提交巨大产物
-          ( cd out 2>/dev/null && find . -name "Image*" -size +1M -exec md5sum {} \; -exec ls -l {} \; ) \
-            >> "$GITHUB_WORKSPACE/build_result/report.txt" 2>&1 || true
 
       # ---------- 自检 ----------
       - name: Collect build diagnostics
