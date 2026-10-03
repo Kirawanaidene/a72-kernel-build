@@ -177,15 +177,47 @@ jobs:
             CROSS_COMPILE_ARM32=arm-linux-androideabi- \
             LD=ld.lld \
             LOCALVERSION=+ \
-            all 2>&1 | tee build.log | tail -200
-          echo "==== build.log 尾部（错误行）===="
-          grep -nE "Error [0-9]+|error:|fatal:|No rule to make|undefined reference" build.log | tail -30 || true
+            all > build.log 2>&1
+          RC=$?
+          echo "==== make 退出码 = $RC ===="
+          echo "==== build.log 行数 = $(wc -l < build.log) ===="
+          echo "==== build.log 最后 60 行 ===="
+          tail -60 build.log
+          echo "==== 错误行 ===="
+          grep -nE "Error [0-9]+|error:|fatal:|No rule to make|undefined reference|Stop\." build.log | tail -40 || echo "  (无)"
 
           echo "==== 产物清单 ===="
-          ls -lh out/System.map out/vmlinux out/arch/arm64/boot/Image* 2>&1 || true
-          # 供本地比对的明文配置副本（.config 是隐藏文件，artifact 默认不收）
-          cp out/.config out/kernel.config.txt
-          cp out/System.map out/System.map.full
+          ls -l out/System.map out/vmlinux out/arch/arm64/boot/Image* 2>&1 || true
+          find out -maxdepth 3 -name "Image*" -o -maxdepth 3 -name "vmlinux" -o -maxdepth 2 -name "System.map" 2>/dev/null | head -20 || true
+
+          # ★ 不依赖 artifact —— 把结果写成明文文件，随仓库提交
+          mkdir -p "$GITHUB_WORKSPACE/build_result"
+          {
+            echo "make_exit_code=$RC"
+            echo "build_log_lines=$(wc -l < build.log)"
+            echo "---- key configs ----"
+            for k in KALLSYMS KALLSYMS_ALL DEBUG_INFO DEBUG_INFO_BTF DEBUG_INFO_DWARF4 \
+                     MODULES LTO THINTOOLCHAIN LOCALVERSION ARM64_VA_BITS PANIC_ON_OOPS; do
+              printf "CONFIG_%-22s = " "$k"
+              grep -E "^CONFIG_$k=|^# CONFIG_$k is not set" out/.config 2>/dev/null || echo "<缺>"
+            done
+            echo "---- products ----"
+            ls -l out/System.map out/vmlinux out/arch/arm64/boot/Image 2>&1 || true
+            echo "---- out dir top ----"
+            ls out/ 2>&1 | head -40
+            echo "---- boot dir ----"
+            ls -l out/arch/arm64/boot/ 2>&1 | head -20
+            echo "---- make rc ----"
+            echo "$RC"
+            echo "---- build.log errors ----"
+            grep -nE "Error [0-9]+|error:|fatal:|No rule to make|undefined reference|Stop\." build.log | tail -40 || true
+            echo "---- build.log tail ----"
+            tail -80 build.log
+          } > "$GITHUB_WORKSPACE/build_result/report.txt" 2>&1
+          cp -f build.log "$GITHUB_WORKSPACE/build_result/build.log" 2>/dev/null || true
+          # 大文件存在性用 md5 表示，避免提交巨大产物
+          ( cd out 2>/dev/null && find . -name "Image*" -size +1M -exec md5sum {} \; -exec ls -l {} \; ) \
+            >> "$GITHUB_WORKSPACE/build_result/report.txt" 2>&1 || true
 
       # ---------- 自检 ----------
       - name: Collect build diagnostics
@@ -237,6 +269,30 @@ jobs:
           path: $GITHUB_WORKSPACE/kernel_workspace/android-kernel/diag
           if-no-files-found: warn
           retention-days: 30
+
+      # ---------- 最可靠通道：把报告提交回仓库 ----------
+      - name: Commit report to repo
+        if: always()
+        continue-on-error: true
+        run: |
+          cd $GITHUB_WORKSPACE
+          git config user.email "ci@local"
+          git config user.name "CI Bot"
+          git add -f build_result 2>/dev/null || true
+          # 大产物（>5MB）用 md5 代替，不入库
+          if [ -d kernel_workspace/android-kernel/out ]; then
+            OUT=kernel_workspace/android-kernel/out
+            mkdir -p build_result
+            for f in "$OUT/arch/arm64/boot/Image" "$OUT/System.map" "$OUT/vmlinux"; do
+              if [ -s "$f" ]; then
+                cp "$f" build_result/ 2>/dev/null || true
+              fi
+            done
+            [ -s "$OUT/.config" ] && cp "$OUT/.config" build_result/kernel.config.txt || true
+            git add -f build_result
+          fi
+          git commit -q -m "ci: build report ($(date +%s))" || echo "(no changes)"
+          git push origin HEAD:${{ github.ref_name }} || echo "push failed (fork/branch protection?)"
 
       - name: Verify products
         if: always()
