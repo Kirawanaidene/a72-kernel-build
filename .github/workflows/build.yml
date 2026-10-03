@@ -45,10 +45,10 @@ jobs:
           sudo -E apt-get -y -qq install git make bc bison ccache openssl \
             dos2unix zip kmod cpio flex libelf-dev curl libssl-dev libtfm-dev \
             wget device-tree-compiler ca-certificates python3 binutils \
-            binutils-aarch64-linux-gnu binutils-arm-linux-gnueabi
+            binutils-aarch64-linux-gnu binutils-arm-linux-gnueabi \
             dwarves libdw-dev python3-pip gawk
-          # BTF needs pahole (4.14 path uses pahole, not DWARF5)
-          (which pahole && pahole --version) || pip3 install --user pahole 2>/dev/null || true
+          # BTF needs pahole (4.14 uses pahole, not the 6.x DWARF5 path)
+          ( which pahole && pahole --version ) || echo "!! pahole missing (BTF will fail)"
           mkdir -p $GITHUB_WORKSPACE/kernel_workspace
           # 配置文件必须在仓库根目录
           test -s $GITHUB_WORKSPACE/kernel_dot_config \
@@ -200,15 +200,25 @@ jobs:
             llvm-readelf -S out/vmlinux 2>/dev/null | grep -iE "btf|debug_info|symtab" | tee -a diag/log.txt ||               readelf -S out/vmlinux 2>/dev/null | grep -iE "btf|debug_info|symtab" | tee -a diag/log.txt
           fi
           echo "==== PAHOLD ====" | tee -a diag/log.txt
-          (which pahole && pahole --version) 2>&1 | tee -a diag/log.txt
+          ( which pahole && pahole --version ) 2>&1 | tee -a diag/log.txt
+          echo "==== 与仓库原厂 config 的差异（olddefconfig 改了什么）====" | tee -a diag/log.txt
+          if [ -f out/.config ] && [ -f "$GITHUB_WORKSPACE/kernel_dot_config" ]; then
+            diff <(sort "$GITHUB_WORKSPACE/kernel_dot_config") <(sort out/.config) 2>&1 \
+              | head -80 | tee -a diag/log.txt
+            echo "==== 差异行数 ====" | tee -a diag/log.txt
+            diff <(sort "$GITHUB_WORKSPACE/kernel_dot_config") <(sort out/.config) 2>&1 \
+              | grep -c '^[<>]' | tee -a diag/log.txt
+          fi
           tail -100 diag/log.txt
 
       - name: Upload diagnostics
         if: always()
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: build-diag
           path: $GITHUB_WORKSPACE/kernel_workspace/android-kernel/diag
+          if-no-files-found: warn
           retention-days: 30
 
       - name: Verify products
