@@ -46,6 +46,9 @@ jobs:
             dos2unix zip kmod cpio flex libelf-dev curl libssl-dev libtfm-dev \
             wget device-tree-compiler ca-certificates python3 binutils \
             binutils-aarch64-linux-gnu binutils-arm-linux-gnueabi
+            dwarves libdw-dev python3-pip gawk
+          # BTF needs pahole (4.14 path uses pahole, not DWARF5)
+          (which pahole && pahole --version) || pip3 install --user pahole 2>/dev/null || true
           mkdir -p $GITHUB_WORKSPACE/kernel_workspace
           # 配置文件必须在仓库根目录
           test -s $GITHUB_WORKSPACE/kernel_dot_config \
@@ -124,6 +127,7 @@ jobs:
           cd android-kernel && git log -1 --oneline
 
       - name: Configure and build stock kernel
+        continue-on-error: true
         run: |
           cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel
           export PATH=$GITHUB_WORKSPACE/kernel_workspace/clang-aosp/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc64/bin:$GITHUB_WORKSPACE/kernel_workspace/gcc32/bin:$PATH
@@ -142,6 +146,9 @@ jobs:
           export CROSS_COMPILE=aarch64-linux-android-
           export CROSS_COMPILE_ARM32=arm-linux-androideabi-
           export CLANG_TRIPLE=aarch64-linux-gnu-
+          export PATH="$HOME/.local/bin:$PATH"
+          echo "==== pahole ===="
+          which pahole || echo "!! no pahole (BTF will fail)"
 
           mkdir -p out
           cp $GITHUB_WORKSPACE/kernel_dot_config out/.config
@@ -174,7 +181,38 @@ jobs:
           cp out/System.map out/System.map.full
 
       # ---------- 自检 ----------
+      - name: Collect build diagnostics
+        if: always()
+        run: |
+          cd $GITHUB_WORKSPACE/kernel_workspace/android-kernel || exit 0
+          mkdir -p diag
+          echo "==== out 目录内容 ====" | tee diag/log.txt
+          ls -la out/ 2>&1 | head -40 | tee -a diag/log.txt
+          echo "==== .config 关键项 ====" | tee -a diag/log.txt
+          for k in KALLSYMS KALLSYMS_ALL DEBUG_INFO DEBUG_INFO_BTF DEBUG_INFO_DWARF4                    LOCALVERSION BT MTK_COMBO_BT MTK_COMBO_COMM SECURITY_APPARMOR                    SECURITYFS KVM ARM64_VA_BITS PANIC_ON_OOPS; do
+            printf "  CONFIG_%-24s = " "$k" | tee -a diag/log.txt
+            (grep -E "^CONFIG_$k=|^# CONFIG_$k is not set" out/.config || echo "<缺>") | tee -a diag/log.txt
+          done
+          echo "==== 产物 ====" | tee -a diag/log.txt
+          ls -l out/System.map out/vmlinux out/arch/arm64/boot/Image 2>&1 | tee -a diag/log.txt
+          if [ -f out/vmlinux ]; then
+            echo "==== vmlinux 段（看 BTF/符号）====" | tee -a diag/log.txt
+            llvm-readelf -S out/vmlinux 2>/dev/null | grep -iE "btf|debug_info|symtab" | tee -a diag/log.txt ||               readelf -S out/vmlinux 2>/dev/null | grep -iE "btf|debug_info|symtab" | tee -a diag/log.txt
+          fi
+          echo "==== PAHOLD ====" | tee -a diag/log.txt
+          (which pahole && pahole --version) 2>&1 | tee -a diag/log.txt
+          tail -100 diag/log.txt
+
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-diag
+          path: $GITHUB_WORKSPACE/kernel_workspace/android-kernel/diag
+          retention-days: 30
+
       - name: Verify products
+        if: success()
         run: |
           OUT="$GITHUB_WORKSPACE/kernel_workspace/android-kernel/out"
           for f in "$OUT/System.map" "$OUT/vmlinux" "$OUT/arch/arm64/boot/Image"; do
